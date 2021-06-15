@@ -76,11 +76,10 @@ CML_CATALOG_PREFIX := connector-catalog-camel-
 
 cos-fleet-catalog-camel: $(MANIFESTS_PATH)/cos-fleet-catalog-camel/configs
 
-$(CML_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-camel/cos-fleet-catalog-camel/src/generated/resources/*
-	$(foreach CFG, $?, \
+$(CML_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-camel/cos-fleet-catalog-camel/src/generated/resources/
+	$(foreach CFG, $(wildcard $?/*), \
 		cp -R $(CFG) $(CML_CATALOG_DIR)/configs/$(subst cos-fleet-catalog-camel-,$(CML_CATALOG_PREFIX),$(notdir $(CFG))) ;)
-	echo $(subst cos-fleet-catalog-camel-,$(CML_CATALOG_PREFIX),$(notdir $?))
-	cd $(CML_CATALOG_DIR) ; $(foreach CFG, $(subst cos-fleet-catalog-camel-,$(CML_CATALOG_PREFIX),$(notdir $?)), \
+	cd $(CML_CATALOG_DIR) ; $(foreach CFG, $(subst cos-fleet-catalog-camel-,$(CML_CATALOG_PREFIX),$(notdir $(wildcard $?/*))), \
 		oc create configmap $(CFG) --from-file=configs/$(CFG) -o yaml --dry-run > $(CFG).yaml &&\
 		kustomize edit add resource $(CFG).yaml; )
 	touch $(CML_CATALOG_DIR)/configs/*
@@ -91,19 +90,19 @@ DBZ_CATALOG_PREFIX := connector-catalog-debezium-
 
 cos-fleet-catalog-debezium: $(MANIFESTS_PATH)/cos-fleet-catalog-debezium/configs
 
-$(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/resources/META-INF/resources/*
-	cp -R $? $(DBZ_CATALOG_DIR)/configs
+$(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/resources/META-INF/resources/
+	cp -R $(wildcard $?/*) $(DBZ_CATALOG_DIR)/configs
 	touch $(DBZ_CATALOG_DIR)/configs/*
-	cd $(DBZ_CATALOG_DIR) ; $(foreach CFG, $(notdir $?), \
+	cd $(DBZ_CATALOG_DIR) ; $(foreach CFG, $(notdir $(wildcard $?/*)), \
 		oc create configmap $(DBZ_CATALOG_PREFIX)$(CFG) --from-file=configs/$(CFG) -o yaml --dry-run > $(DBZ_CATALOG_PREFIX)$(CFG).yaml &&\
 		kustomize edit add resource $(DBZ_CATALOG_PREFIX)$(CFG).yaml; )
 
 # Fleetshard operator
 FLTS_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard
 
-cos-fleetshard: $(SOURCES_DIR)/cos-fleetshard/cos-fleetshard-operator/src/main/kubernetes/*.yml
-	cp -R $? $(FLTS_MANIFEST)
-	cd $(FLTS_MANIFEST) ; $(foreach YML, $(notdir $?), \
+cos-fleetshard: $(SOURCES_DIR)/cos-fleetshard/cos-fleetshard-operator/src/main/kubernetes/
+	cp -R $(wildcard $?/*.yml) $(FLTS_MANIFEST)
+	cd $(FLTS_MANIFEST) ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
 		kustomize edit add resource $(notdir $(YML)); )
 
 cos-fleetshard-meta-camel:
@@ -120,9 +119,9 @@ kas-fleet-manager: $(KAS_DIR)/templates
 	rm -f templates/connector-catalog-configmap.yml && \
 	kustomize edit remove resource templates/connector-catalog-configmap.yml
 
-$(KAS_DIR)/templates: $(SOURCES_DIR)/kas-fleet-manager/templates/*.yml
-	cp $? $@
-	cd $(MANIFESTS_PATH)/kas-fleet-manager/ ; $(foreach YML, $(notdir $?), \
+$(KAS_DIR)/templates: $(SOURCES_DIR)/kas-fleet-manager/templates/
+	cp $(wildcard $?/*.yml) $@
+	cd $(MANIFESTS_PATH)/kas-fleet-manager/ ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
  		kustomize edit add resource templates/$(YML); )
 
 ## clean manifest files copied from sources
