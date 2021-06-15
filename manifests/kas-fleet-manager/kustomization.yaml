@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- templates/db-template.yml
+- templates/envoy-config-configmap.yml
+- templates/route-template.yml
+- templates/secrets-template.yml
+- templates/service-template.yml

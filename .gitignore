@@ -1,0 +1,9 @@
+work/
+out/
+.idea
+*.iml
+*.ipr
+*.iws
+*-*out.yaml
+**/connector-catalog-debezium-*.yaml
+**/connector-catalog-camel-*.yaml
