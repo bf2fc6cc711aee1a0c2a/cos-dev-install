@@ -2,16 +2,19 @@
 MKFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
 
+.DEFAULT_GOAL := all
+SHELL = bash
+
 ## default source directory, assuming all bf2 projects are kept in the same basedir
-SOURCES_DIR := $(MKFILE_DIR)/work
+SOURCES_DIR ?= $(MKFILE_DIR)/work
 
 ## overlay directory name, empty by default to build base kustomizations
-OVERLAY :=
+OVERLAY ?=
 
 ## save or apply kustomized resources
-KUBECTL_APPLY := false
-OUTPUT_DIR := $(MKFILE_DIR)/out
-OUTPUT_FILE := $(OVERLAY)out.yaml
+KUBECTL_APPLY ?= false
+OUTPUT_DIR ?= $(MKFILE_DIR)/out
+OUTPUT_FILE ?= $(OVERLAY)out.yaml
 
 ## manifests
 # TODO add non-existent cos-fleetshard-meta-debezium main branch
@@ -21,9 +24,9 @@ MANIFEST_NAMES := $(MANIFEST_DIRS:$(MANIFESTS_PATH)/%=%)
 MANIFEST_YMLS := $(MANIFEST_DIRS:%=%/*.yml)
 
 ## source repos and branches
-REPO_BASE := git@github.com:bf2fc6cc711aee1a0c2a
-REPO_BRANCH := main
-GIT_PULL := false
+REPO_BASE ?= git@github.com:bf2fc6cc711aee1a0c2a
+REPO_BRANCH ?= main
+GIT_PULL ?= false
 SOURCES_DIRS := $(MANIFEST_NAMES:%=$(SOURCES_DIR)/%/)
 
 ## kustomizations
