@@ -100,8 +100,11 @@ $(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/r
 # Fleetshard operator
 FLTS_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard
 
-cos-fleetshard: $(SOURCES_DIR)/cos-fleetshard/cos-fleetshard-operator/src/main/kubernetes/
+cos-fleetshard: $(FLTS_MANIFEST)
+
+$(FLTS_MANIFEST): $(SOURCES_DIR)/cos-fleetshard/cos-fleetshard-operator/src/main/kubernetes/
 	cp -R $(wildcard $?/*.yml) $(FLTS_MANIFEST)
+	touch $(FLTS_MANIFEST)
 	cd $(FLTS_MANIFEST) ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
 		kustomize edit add resource $(notdir $(YML)); )
 
