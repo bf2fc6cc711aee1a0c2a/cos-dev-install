@@ -1,0 +1,987 @@
+---
+kind: Template
+apiVersion: v1
+metadata:
+  name: kas-fleet-manager-service
+  annotations:
+    openshift.io/display-name: Kas Fleet Manager API
+    description: Kafka Services Fleet Manager API to managed Kafka and kafka connectors deployment
+    tags: golang
+    iconClass: icon-shadowman
+    template.openshift.io/provider-display-name: Red Hat, Inc.
+    template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
+labels:
+  template: kas-fleet-manager
+parameters:
+
+- name: ENVIRONMENT
+  displayName: Environment
+  description: Which Kafka Service Fleet Manager environment to use for this deployment
+  value: production
+
+- name: IMAGE_REGISTRY
+  displayName: Image Registry
+  required: true
+
+- name: IMAGE_REPOSITORY
+  displayName: Image Repository
+  required: true
+
+- name: VERSION
+  displayName: Image version
+  value: latest
+
+- name: IMAGE_TAG
+  displayName: Image tag
+  value: latest
+
+- name: GLOG_V
+  displayName: GLOG V Level
+  description: Log verbosity level
+  value: "10"
+
+- name: MEMORY_REQUEST
+  description: Memory request for the API pods.
+  value: "512Mi"
+
+- name: MEMORY_LIMIT
+  description: Memory limit for the API pods.
+  value: "1Gi"
+
+- name: CPU_REQUEST
+  description: CPU request for the API pods.
+  value: "200m"
+
+- name: CPU_LIMIT
+  description: CPU limit for the API pods.
+  value: "1"
+
+- name: JWKS_URL
+  displayName: JWK Token Certificate URL
+
+- name: OCM_BASE_URL
+  displayName: OCM API Base URL
+  description: Base path for all OCM APIs
+
+- name: OCM_DEBUG
+  displayName: OCM API Debug mode
+  description: Debug mode for OCM API client
+  value: "false"
+
+- name: REPLICAS
+  description: Number of replicas of the service to run.
+  value: "3"
+
+- name: ENABLE_JWT
+  displayName: Enable JWT
+  description: Enable JWT authentication validation
+  value: "true"
+
+- name: ENABLE_HTTPS
+  displayName: Enable HTTPS
+  description: Enable HTTPS rather than HTTP
+  value: "true"
+
+- name: ENABLE_CONNECTORS
+  displayName: Enable Connectors API
+  description: Enable the connectors API
+  value: "false"
+
+- name: API_SERVER_BINDADDRESS
+  displayName: API Server Bindaddress
+  description: API server bind adddress
+  value: :8000
+
+- name: METRICS_SERVER_BINDADDRESS
+  displayName: Metrics Server Bindaddress
+  description: Metrics server bind adddress
+  value: :8080
+
+- name: HEALTH_CHECK_SERVER_BINDADDRESS
+  displayName: Health check Server Bindaddress
+  description: Health check server bind adddress
+  value: :8083
+
+- name: DB_MAX_OPEN_CONNS
+  displayName: Maximum Open Database Connections
+  description: Maximum number of open database connections per pod
+  value: "50"
+
+- name: DB_SSLMODE
+  displayName: DB SSLmode
+  description: Database ssl mode (disable | require | verify-ca | verify-full)
+  value: "disable"
+
+- name: ENABLE_DB_DEBUG
+  displayName: Enable DB Debug
+  description: framework's debug mode
+  value: "false"
+
+- name: ENABLE_METRICS_HTTPS
+  displayName: Enable Metrics HTTPS
+  description: Enable HTTPS for metrics server
+  value: "false"
+
+- name: ENABLE_OCM_MOCK
+  displayName: Enable OCM Mock
+  description: Enable mock uhc client
+  value: "false"
+
+- name: OCM_MOCK_MODE
+  displayName: OCM mock mode
+  description: OCM mock mode
+  value: "emulate-server"
+
+- name: ENABLE_SENTRY
+  displayName: Enable Sentry Error Reporting
+  value: "false"
+
+- name: SENTRY_URL
+  displayName: Sentry base URL
+  description: Base URL (without https://) of sentry server
+  value: "sentry.autom8.in"
+
+- name: SENTRY_PROJECT
+  displayName: Sentry Project ID
+  value: "8"
+
+- name: ENABLE_SENTRY_DEBUG
+  displayName: Enable Sentry Debug Logging
+  value: "false"
+
+- name: SENTRY_TIMEOUT
+  displayName: Sentry Timeout
+  description: Timeout for all Sentry operations
+  value: "5s"
+
+- name: SUPPORTED_CLOUD_PROVIDERS
+  displayName: Supported Cloud Providers
+  description: A list of supported cloud providers in a yaml format.
+  value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
+
+- name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
+  displayName: Enable Kafka TLS
+  description: Enable the Kafka TLS certificate
+  value: "false"
+
+- name: DEX_URL
+  displayName: Dex url
+  description: A URL to dex that will be used by the observability stack for authentication.
+  value: "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
+
+- name: DEX_USERNAME
+  displayName: Dex username
+  description: Dex username that will be used by the observability stack for authentication.
+  value: "admin@example.com"
+
+- name: OBSERVATORIUM_GATEWAY
+  displayName: Observatorium gateway
+  description: A URL to an Observatorium instance where observability metrics will sent to.
+  value: "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
+
+- name: OBSERVATORIUM_TENANT
+  displayName: Observatorium tenant
+  description: Observatorium tenant where observability metrics will sent to.
+  value: "test"
+
+- name: ENABLE_OBSERVATORIUM_DEBUG
+  displayName: Enable Observatorium Debug Logging
+  value: "false"
+
+- name: OBSERVATORIUM_TIMEOUT
+  displayName: observatorium Request Timeout (seconds)
+  description: Timeout duration for all requests made to Observatorium
+  value: "120s"
+
+- name: OBSERVATORIUM_INSECURE
+  displayName: Observatorium ssl mode (disable)
+  value: "true"
+
+- name: ENABLE_TERMS_ACCEPTANCE
+  displayName: Enable terms acceptance
+  description: If enabled, kafkas can't be created unless required terms are accepted
+  value: "false"
+
+- name: ENABLE_DENY_LIST
+  displayName: Enable the Deny List
+  description: Enable the denied list access control feature
+  value: "false"
+
+- name: ENABLE_INSTANCE_LIMIT_CONTROL
+  displayName: Enable instance limit control
+  description: Enable to enforce limits on how much instances a user can create.
+  value: "true"
+
+- name: MAX_ALLOWED_INSTANCES
+  displayName: Maximum allowed instances
+  description: The default value of maximum number of instances that can be created by users.
+  value: "1"
+
+- name: MAX_ALLOWED_SERVICE_ACCOUNTS
+  displayName: Maximum allowed service accounts
+  description: The default value of maximum number of service accounts that can be created by users.
+  value: "2"
+
+- name: MAX_LIMIT_FOR_SSO_GET_CLIENTS
+  displayName: Max clients fetch by get clients
+  description: The default value of maximum number of clients fetch from mas-sso.
+  value: "100"
+
+- name: ALLOW_ANY_REGISTERED_USERS
+  displayName: Allow any registered users
+  description: Enable to allow any registered users to access the service.
+  value: "false"
+
+- name: ALLOWED_SERVICE_ACCOUNTS
+  displayName: A list of allowed service accounts
+  description: A list of allowed service accounts that are allowed to access the service without requiring an organisation to do so in a yaml format.
+  value: "[]"
+
+- name: ALLOWED_USERS_PER_ORGANISATION
+  displayName: A list of allowed users per organisation
+  description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
+  value: "[{id: 13640203, max_allowed_instances: 5, allow_all: true, allowed_users: []}, {id: 12147054, max_allowed_instances: 1, allow_all: true, allowed_users: []}, {id: 13639843, max_allowed_instances: 1, allow_all: true, allowed_users: []}]"
+
+- name: DENIED_USERS
+  displayName: A list of denied users given by their usernames
+  description: A list of denied users that are not allowed to access the service. A user is identified by its username.
+  value: "[]"
+
+- name: READ_ONLY_USERS
+  displayName: A list of read only users given by their usernames
+  description: A list of read only users. A user is identified by its username.
+  value: "[]"
+
+- name: KAFKA_SRE_USERS
+  displayName: A list of kafka-sre admin users given by their usernames
+  description: A list of kafka-sre admin users. A user is identified by its username.
+  value: "[]"
+
+- name: MAS_SSO_DEBUG
+  displayName: MAS SSO API Debug mode
+  description: Debug mode for MAS SSO API client
+  value: "false"
+
+- name: MAS_SSO_ENABLE_AUTH
+  displayName: Enable MAS SSO Auth
+  description: Enable MAS SSO Auth for the data plane
+  value: "true"
+
+- name: MAS_SSO_BASE_URL
+  displayName: MAS SSO Host Url
+  description: MAS SSO Host url
+
+- name: MAS_SSO_REALM
+  displayName: MAS SSO REALM for Kafka SSO Clients and Service Accounts
+  description: MAS SSO realm for Kafka SSO Clients and Service Accounts
+
+- name: OSD_IDP_MAS_SSO_REALM
+  displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
+  description: MAS SSO realm for OSD Cluster Identity Provider Clients
+  value: "interim-test-realm"
+
+- name: CLUSTER_OPENSHIFT_VERSION
+  displayName: The version of openshift
+  description: The version of openshift to be deployed on a new created OSD cluster
+  value: ""
+
+- name: CLUSTER_COMPUTE_MACHINE_TYPE
+  displayName: Compute machine type
+  description: The compute machine type of each node on a new created cluster.
+  value: "m5.4xlarge"
+
+- name: QUOTA_TYPE
+  displayName: Quota type
+  description: Tye type of quota management service to be used. Available options are 'ams' and "allow-list"
+  value: "allow-list"
+
+- name: KAS_FLEETSHARD_POLL_INTERVAL
+  displayName: Kas-fleetshard-operator poll interval
+  description: Interval defining how often the synchronizer polls and gets updates from the control plane
+  value: "15s"
+
+- name: KAS_FLEETSHARD_RESYNC_INTERVAL
+  displayName: Kas-fleetshard-operator resync interval
+  description: Interval defining how often the synchronizer reports back status changes to the control plane
+  value: "60s"
+
+- name: OBSERVABILITY_CONFIG_REPO
+  displayName: Observability configuration repo URL
+  description: URL of the observability configuration repo
+  value: "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
+
+- name: OBSERVABILITY_CONFIG_CHANNEL
+  displayName: Observability configuration channel
+  description: Channel of the observability configuration
+  value: "resources"
+
+- name: OBSERVABILITY_CONFIG_TAG
+  displayName: Observability configuration tag
+  description: Tag or branch to use inside the configuration repo
+  value: "v1.4.0-staging"
+
+- name: SERVICE_PUBLIC_HOST_URL
+  displayName: The public HTTP host URL of the service
+  description: The public HTTP host URL of the service
+  value: "https://api.openshift.com"
+
+- name: STRIMZI_OPERATOR_VERSION
+  displayName: Strimzi operator version
+  description: The version of the Strimzi operator to install
+  value: "v0.21.3"
+
+- name: KAFKA_CAPACITY_MAX_CAPACITY
+  displayName: Maximum number of clusters
+  description: Maximum number of allowed kafka clusters
+  value: "1000"
+
+- name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
+  displayName: Kafka ingress throughput
+  description: Ingress throughput configuration for the default Kafka instance type
+  value: "2Mi"
+
+- name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
+  displayName: Kafka total max connections
+  description: Total max connections configuration for the default Kafka instance type
+  value: "100"
+
+- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE
+  displayName: Kafka max data retention size
+  description: Data retention size configuration for the default Kafka instance type
+  value: "60Gi"
+
+- name: KAFKA_CAPACITY_MAX_PARTITIONS
+  displayName: Kafka max partitions
+  description: Max partitions configuration for the default Kafka instance type
+  value: "100"
+
+- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD
+  displayName: Kafka max data retention period
+  description: Data retention period configuration for the default Kafka instance type
+  value: "P14D"
+
+- name: KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
+  displayName: Kafka max connection attempts per second
+  description: Max connection attempts per second configuration for the default Kafka instance type
+  value: "100"
+
+- name: DEFAULT_KAFKA_VERSION
+  displayName: Default Kafka version
+  description: The default version of Kafka when creating Kafka instances.
+  value: "2.7.0"
+
+- name: KAFKA_LIFE_SPAN
+  displayName: Kafka life span expiration in hours
+  description: Time period in hours after which kafka instances are deleted. This value must be a positive value
+  value: "48"
+
+- name: ENABLE_KAFKA_LIFE_SPAN
+  displayName: Enables Kafka life span for expiration in hours
+  description: Enables the ability to set a Kafka life span for expiration in hours
+  value: "false"
+
+- name: DATAPLANE_CLUSTER_SCALING_TYPE
+  displayName: Data Plane Cluster Scaling Type
+  description: Data Plane Cluster Scaling type (manual/auto/none). If set to none, scaling is disabled.
+  value: "manual"
+
+- name: CLUSTER_LIST
+  displayName: A list of cluster to be registered in kas fleet manager
+  description: A list of cluster to be registered in kas fleet manager
+  value: "[]"
+
+- name: ENVOY_IMAGE
+  description: Envoy image
+  value: envoyproxy/envoy:v1.16.1
+
+- name: KAFKA_DOMAIN_NAME
+  description: The domain name to use for Kafka instances
+  value: bf2.kafka-stage.rhcloud.com
+
+- name: LONG_LIVED_KAFKAS
+  displayName: List of Kafkas that will not expire
+  description: List of Kafkas that will not expire
+  value: "[]"
+
+- name: STRIMZI_OPERATOR_ADDON_ID
+  displayName: Strimzi operator addon ID
+  description: ID of the Strimzi operator addon
+  value: "managed-kafka"
+
+- name: KAS_FLEETSHARD_ADDON_ID
+  displayName: kas-fleetshard addon ID
+  description: ID of the kas-fleetshard addon
+  value: "kas-fleetshard-operator"
+
+- name: CLUSTER_LOGGING_OPERATOR_ADDON_ID
+  displayName: Cluster logging operator addon ID
+  description: ID of the cluster logging operator addon
+  value: ""
+
+- name: VAULT_KIND
+  description: The type of vault to use to store secrets
+  value: tmp
+
+- name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
+  description: Enables reconciliation for data plane clusters in the 'Ready' state
+  value: "true"
+
+objects:
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-providers-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      provider-configuration.yaml: |-
+        supported_providers: ${SUPPORTED_CLOUD_PROVIDERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-allowed-users-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      allow-list-configuration.yaml: |-
+        allow_any_registered_users: ${ALLOW_ANY_REGISTERED_USERS}
+        allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
+        allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-denied-users-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      deny-list-configuration.yaml: |-
+        ${DENIED_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-read-only-user-list
+      annotations:
+        qontract.recycle: "true"
+    data:
+      read-only-user-list.yaml: |-
+        ${READ_ONLY_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-kafka-sre-user-list
+      annotations:
+        qontract.recycle: "true"
+    data:
+      kafka-sre-user-list.yaml: |-
+        ${KAFKA_SRE_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-long-lived-kafkas
+      annotations:
+        qontract.recycle: "true"
+    data:
+      long-lived-kafkas-configuration.yaml: |-
+        ${LONG_LIVED_KAFKAS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-kafka-capacity-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      kafka-capacity-config.yaml: |-
+        maxCapacity: ${KAFKA_CAPACITY_MAX_CAPACITY}
+        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
+        totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
+        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
+        maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
+        maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
+        maxConnectionAttemptsPerSec: ${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-authentication
+      annotations:
+        qontract.recycle: "true"
+    data:
+      jwks.json: |-
+        {
+          "keys": [
+            {
+              "kid": "-4elc_VdN_WsOUYf2G4Qxr8GcwIx_KtXUCitatLKlLw",
+              "kty": "RSA",
+              "alg": "RS256",
+              "use": "sig",
+              "n": "5MvhbE1Mxr2FUYGZiH0z6p-kV-FIUHp4ErxkD6S8Sc5OB7IjRKDSsJzmuwR803cKpeKoIkkUTiznYwCBqAUdP3bIZ8k97X6GX19dOSqL4ej1rjYZYAf9_Jt_Z-0PzIjX50z6TpqeGoh7-6P-634SvbdjatnhTAQ3qsBXfPOHPIPRAZkGfmlM1EdvIlm_d2hQ7nDSETbVC4YHY-iESvUhre-aNmqJU_E6fRnGwFTPS20fPLE5bUNbshvTXn5c-bxtWK9bSCHCRVYUF9QWwDoFX9gGOIpSScHAKQLRR16yOQjOioZ2FeVZnDpWNvZelbQ7LtLN0H5uCJsqDoZDDhDWeFp-25O9ih5M9auT_2IepUlOq3OBMj7i3CJXrvjNQiuGkPHp9xN6kd5H4E5hcqUTmfYdgf1IuXP0cTwYtQor21dWBSpFvxW8l1HGLOaO_rSetNRJ-tZ7FKUK5L6crt1N72AGIay96gNOWNe4POOG_ML1r4h3SKBFdMPwJ-R5KDg7-oRcUT4kLuFtWuQG7bKLJhIxw_SnVFajLGt1d3-OCqX6ozuUbdEW31f9iLZd4w-NUSSHjxP1Uvalk5QfUro9w9fTW73jRIUASnbHunopjt_IkiQswrdIwpfpeBokcf9O757_i0kctQ5M1gyPf4-0yPfuDVkeBAHygoxNJU9H3C0",
+              "e": "AQAB"
+            },
+            {
+              "kid": "v5MpUEnwk1VYIqifv9G9xmIB2ZLzPttk-0PaEURQQ3I",
+              "kty": "RSA",
+              "alg": "RS256",
+              "use": "sig",
+              "n": "uYp35gi5YzQeNN5aQOPwLranSJT9aJB-w6Ih4Wn9R6FzEg1OEKwBNNpb-z18reAyhxQMy_bCz3q-J7viX6p5hbclPBakKOjPB4lDzwhvfE1G4vp84zH1bR7m8dd4OXbriojVZ51IPNuItO00nrDrx6PWNP_5ufBUwjJo8-BD-sWm7BP_CVlb8miVh8itpcLJrszpHzF-u0OPqwI_e3P83cYOsXoQRxD4wpo718yqYh4J3NNJQYnyprJMpC3w3QQ5PR28TbBfSHgvtWD1SBuavHh2jwT_6Pi8FqOS1vfX7QA1pxyYZ-zazVxj_zOrCeP3FHyaxTPmn0d5zsXBZCCyhsfCaStnFePTPk-KEGwZAlv43JJjV2rTJc1Lsj1Th7Jq63TvwIGBcFFAtC72N5-jwRjUoeyu_nwO_1r1awvbfrlBF31PG5wxUdVR56PesLO7EVH1_2KrVN7dtgaQkomVk6rULBbCbwhfR1oT3cOxF7d0ajpbzHd2qcfeBzFTABL8dzBp4FcZx5QyYSIOP8fuwSO8zy4rxmBw7HpHGOGFrC3cXWqB33M23IjOpVZbfK46QvJhcGq9QEtOlRO2WVemMcwDSgpceAa7e3ZJx-LO6XyTEjRtTuHMwdLxII3YUlL1hPozrNE1U_ADPGHgnTxGswgBpGOA6rOkWav5uhcj9Cs",
+              "e": "AQAB"
+            },
+            {
+              "kid": "RIENZmfJ6O4rpkmnswmxgMUznjq3rRuUbz5r9eFiq3E",
+              "kty": "RSA",
+              "alg": "RS512",
+              "use": "sig",
+              "n": "0BpyPqFrZHF2xluG8wSjUMr_ouktSJiSq3VcOn6xH04rG8wLX-v3JfhXRjtJl3XpSJU7j5GMJzz3Cq3dbgBCpb49gVQkBE7s4NVlN4gLhonn7VekXF6YZlI152ROFxoKWda157BIj3m--JYVKIiVg21WujAOA5WVjy17t3fC_7HDgPMVO6MSo7aCbzOc1NEDJ0-5NBNtqZBBlu240gyhW8FNgIdgna-_QWKsQOUKTDlvOFwEt0IDXd29KU0FOIGRPiKsQ--1eIBg3OLMxlni-DhWBAyVpf5_kP0P8udSqXfWba6i6YmnNAAdaVYV5_EGYCxPhwdwTndNtDErCw1oaw",
+              "e": "AQAB"
+            },
+            {
+              "kid": "E3DKGdZQ7xTiIvfdFgVXLNupVupFBlcxNUgVCFhDwEg",
+              "kty": "RSA",
+              "alg": "RS512",
+              "use": "sig",
+              "n": "ta1xAjqdqnH_RlDI1rFtiGWYgnxpzqGflSQXzuiKR1QaipHTeGeLDUTcG1O6nlb9YgEVcJKSP8JQ36QNfXCPKlNcsqUqr81jiL_kSNAD3xHX4Z8ymuA-FW24bLeNwRkdGKGy3aY4giJxXnqB63ArtjmmWaGYEQEriUz16wW0w3H_QJyje3__j_Sh1ya_V7Ct3A6ajTipp-OzAuIgsqXbZz2b8ejr3My5PiXz9t41xKx_u4Mm18BQ4SQ2OvTfA0Of0mZ3Q-FVy2q1WIKwPmCMDyV5bigmvRYblRDCbTvKIGHyEjs1zuAxJqzFJkGpAHpnKfbUdSfO-JWK6fB4V3bPzw",
+              "e": "AQAB"
+            }
+          ]
+        }
+
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-dataplane-cluster-scaling-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      dataplane-cluster-configuration.yaml: |-
+        clusters: ${CLUSTER_LIST}
+  - kind: ServiceAccount
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager
+      labels:
+        app: kas-fleet-manager
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: kas-fleet-manager
+      labels:
+        app: kas-fleet-manager
+    spec:
+      selector:
+        matchLabels:
+          app: kas-fleet-manager
+      replicas: ${{REPLICAS}}
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: kas-fleet-manager
+        spec:
+          serviceAccount: kas-fleet-manager
+          serviceAccountName: kas-fleet-manager
+          volumes:
+          - name: tls
+            secret:
+              secretName: kas-fleet-manager-tls
+          - name: service
+            secret:
+              secretName: kas-fleet-manager
+          - name: dataplane-certificate
+            secret:
+              secretName: kas-fleet-manager-dataplane-certificate
+          - name: rds
+            secret:
+              secretName: kas-fleet-manager-rds
+          - name: ocm-managed-services-providers-config
+            configMap:
+              name: ocm-managed-services-providers-config
+          - name: ocm-managed-services-allowed-users-config
+            configMap:
+              name: ocm-managed-services-allowed-users-config
+          - name: ocm-managed-services-denied-users-config
+            configMap:
+              name: ocm-managed-services-denied-users-config
+          - name: ocm-managed-services-read-only-user-list
+            configMap:
+              name: ocm-managed-services-read-only-user-list
+          - name: ocm-managed-services-kafka-sre-user-list
+            configMap:
+              name: ocm-managed-services-kafka-sre-user-list
+          - name: connector-catalog-camel-aws
+            configMap:
+              name: connector-catalog-camel-aws
+          - name: connector-catalog-camel-misc
+            configMap:
+              name: connector-catalog-camel-misc
+          - name: connector-catalog-debezium-mongodb
+            configMap:
+              name: connector-catalog-debezium-mongodb
+          - name: connector-catalog-debezium-mysql
+            configMap:
+              name: connector-catalog-debezium-mysql
+          - name: connector-catalog-debezium-postgres
+            configMap:
+              name: connector-catalog-debezium-postgres
+          - name: ocm-managed-services-kafka-capacity-config
+            configMap:
+              name: ocm-managed-services-kafka-capacity-config
+          - name: ocm-managed-services-long-lived-kafkas
+            configMap:
+              name: ocm-managed-services-long-lived-kafkas
+          - name: ocm-managed-services-authentication
+            configMap:
+              name: ocm-managed-services-authentication
+          - name: ocm-managed-services-dataplane-cluster-scaling-config
+            configMap:
+              name: ocm-managed-services-dataplane-cluster-scaling-config
+          - name: envoy-config
+            configMap:
+              name: kas-fleet-manager-envoy-config
+          - name: envoy-tls
+            secret:
+              secretName: kas-fleet-manager-envoy-tls
+          - name: envoy-unix-sockets
+            emptyDir:
+              medium: Memory
+          initContainers:
+          - name: id
+            image: quay.io/centos/centos:8
+            command:
+            - echo
+            - ${VERSION}-${BUILD_ID}-${BUILD_TS}
+          - name: migration
+            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - name: service
+              mountPath: /secrets/service
+            - name: rds
+              mountPath: /secrets/rds
+            command:
+            - /usr/local/bin/kas-fleet-manager
+            - migrate
+            - --db-host-file=/secrets/rds/db.host
+            - --db-port-file=/secrets/rds/db.port
+            - --db-user-file=/secrets/rds/db.user
+            - --db-password-file=/secrets/rds/db.password
+            - --db-name-file=/secrets/rds/db.name
+            - --alsologtostderr
+            - -v=${GLOG_V}
+          containers:
+          - name: service
+            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - name: tls
+              mountPath: /secrets/tls
+            - name: service
+              mountPath: /secrets/service
+            - name: dataplane-certificate
+              mountPath: /secrets/dataplane-certificate
+            - name: rds
+              mountPath: /secrets/rds
+            - name: ocm-managed-services-providers-config
+              mountPath: /config/provider-configuration.yaml
+              subPath: provider-configuration.yaml
+            - name: ocm-managed-services-allowed-users-config
+              mountPath: /config/allow-list-configuration.yaml
+              subPath: allow-list-configuration.yaml
+            - name: ocm-managed-services-denied-users-config
+              mountPath: /config/deny-list-configuration.yaml
+              subPath: deny-list-configuration.yaml
+            - name: ocm-managed-services-read-only-user-list
+              mountPath: /config/read-only-user-list.yaml
+              subPath: read-only-user-list.yaml
+            - name: ocm-managed-services-kafka-sre-user-list
+              mountPath: /config/kafka-sre-user-list.yaml
+              subPath: kafka-sre-user-list.yaml
+            - name: connector-catalog-camel-aws
+              mountPath: /config/connector-catalog/camel-aws
+            - name: connector-catalog-camel-misc
+              mountPath: /config/connector-catalog/camel-misc
+            - name: connector-catalog-debezium-mongodb
+              mountPath: /config/connector-catalog/debezium-mongodb
+            - name: connector-catalog-debezium-mysql
+              mountPath: /config/connector-catalog/debezium-mysql
+            - name: connector-catalog-debezium-postgres
+              mountPath: /config/connector-catalog/debezium-postgres
+            - name: ocm-managed-services-kafka-capacity-config
+              mountPath: /config/kafka-capacity-config.yaml
+              subPath: kafka-capacity-config.yaml
+            - name: ocm-managed-services-long-lived-kafkas
+              mountPath: /config/long-lived-kafkas-configuration.yaml
+              subPath: long-lived-kafkas-configuration.yaml
+            - name: ocm-managed-services-authentication
+              mountPath: /config/authentication
+            - name: ocm-managed-services-dataplane-cluster-scaling-config
+              mountPath: /config/dataplane-cluster-configuration.yaml
+              subPath: dataplane-cluster-configuration.yaml
+            env:
+              - name: "OCM_ENV"
+                value: "${ENVIRONMENT}"
+            command:
+            - /usr/local/bin/kas-fleet-manager
+            - serve
+            - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
+            - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
+            - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
+            - --providers-config-file=/config/provider-configuration.yaml
+            - --allow-list-config-file=/config/allow-list-configuration.yaml
+            - --deny-list-config-file=/config/deny-list-configuration.yaml
+            - --read-only-user-list-file=/config/read-only-user-list.yaml
+            - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
+            - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
+            - --kafka-lifespan=${KAFKA_LIFE_SPAN}
+            - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
+            - --long-lived-kafkas-config-file=/config/long-lived-kafkas-configuration.yaml
+            - --aws-access-key-file=/secrets/service/aws.accesskey
+            - --aws-account-id-file=/secrets/service/aws.accountid
+            - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
+            - --aws-route53-access-key-file=/secrets/service/aws.route53accesskey
+            - --aws-route53-secret-access-key-file=/secrets/service/aws.route53secretaccesskey
+            - --dex-password-file=/secrets/service/dex.password
+            - --dex-secret-file=/secrets/service/dex.secret
+            - --dex-username=${DEX_USERNAME}
+            - --dex-url=${DEX_URL}
+            - --observatorium-gateway=${OBSERVATORIUM_GATEWAY}
+            - --observatorium-tenant=${OBSERVATORIUM_TENANT}
+            - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
+            - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
+            - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
+            - --observatorium-token-file=/secrets/service/observatorium.token
+            - --db-host-file=/secrets/rds/db.host
+            - --db-port-file=/secrets/rds/db.port
+            - --db-user-file=/secrets/rds/db.user
+            - --db-password-file=/secrets/rds/db.password
+            - --db-name-file=/secrets/rds/db.name
+            - --ocm-client-id-file=/secrets/service/ocm-service.clientId
+            - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
+            - --mas-sso-enable-auth=${MAS_SSO_ENABLE_AUTH}
+            - --mas-sso-client-id-file=/secrets/service/keycloak-service.clientId
+            - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
+            - --mas-sso-base-url=${MAS_SSO_BASE_URL}
+            - --mas-sso-realm=${MAS_SSO_REALM}
+            - --max-allowed-service-accounts=${MAX_ALLOWED_SERVICE_ACCOUNTS}
+            - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
+            - --osd-idp-mas-sso-realm=${OSD_IDP_MAS_SSO_REALM}
+            - --osd-idp-mas-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
+            - --osd-idp-mas-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
+            - --mas-sso-cert-file=/secrets/service/keycloak-service.crt
+            - --mas-sso-debug=${MAS_SSO_DEBUG}
+            - --self-token-file=/secrets/service/ocm-service.token
+            - --ocm-base-url=${OCM_BASE_URL}
+            - --ocm-debug=${OCM_DEBUG}
+            - --https-cert-file=/secrets/tls/tls.crt
+            - --https-key-file=/secrets/tls/tls.key
+            - --jwks-url=${JWKS_URL}
+            - --jwks-file=/config/authentication/jwks.json
+            - --enable-jwt=${ENABLE_JWT}
+            - --enable-https=${ENABLE_HTTPS}
+            - --api-server-bindaddress=${API_SERVER_BINDADDRESS}
+            - --metrics-server-bindaddress=${METRICS_SERVER_BINDADDRESS}
+            - --health-check-server-bindaddress=${HEALTH_CHECK_SERVER_BINDADDRESS}
+            - --enable-health-check-https=${ENABLE_HTTPS}
+            - --db-sslmode=${DB_SSLMODE}
+            - --db-max-open-connections=${DB_MAX_OPEN_CONNS}
+            - --enable-db-debug=${ENABLE_DB_DEBUG}
+            - --enable-metrics-https=${ENABLE_METRICS_HTTPS}
+            - --enable-ocm-mock=${ENABLE_OCM_MOCK}
+            - --enable-ready-dataplane-clusters-reconcile=${ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE}
+            - --ocm-mock-mode=${OCM_MOCK_MODE}
+            - --enable-sentry=${ENABLE_SENTRY}
+            - --enable-sentry-debug=${ENABLE_SENTRY_DEBUG}
+            - --sentry-url=${SENTRY_URL}
+            - --sentry-project=${SENTRY_PROJECT}
+            - --sentry-timeout=${SENTRY_TIMEOUT}
+            - --sentry-key-file=/secrets/service/sentry.key
+            - --enable-connectors=${ENABLE_CONNECTORS}
+            - --connector-catalog=/config/connector-catalog/camel-aws
+            - --connector-catalog=/config/connector-catalog/camel-misc
+            - --connector-catalog=/config/connector-catalog/debezium-mongodb
+            - --connector-catalog=/config/connector-catalog/debezium-mysql
+            - --connector-catalog=/config/connector-catalog/debezium-postgres
+            - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}
+            - --enable-deny-list=${ENABLE_DENY_LIST}
+            - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
+            - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
+            - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
+            - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
+            - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
+            - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
+            - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
+            - --quota-type=${QUOTA_TYPE}
+            - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
+            - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
+            - --observability-config-access-token-file=/secrets/service/observability-config-access.token
+            - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
+            - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
+            - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
+            - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
+            - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
+            - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
+            - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
+            - --strimzi-operator-addon-id=${STRIMZI_OPERATOR_ADDON_ID}
+            - --kas-fleetshard-addon-id=${KAS_FLEETSHARD_ADDON_ID}
+            - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
+            - --alsologtostderr
+            - -v=${GLOG_V}
+            - --vault-kind=${VAULT_KIND}
+            - --vault-access-key-file=/secrets/service/vault.accesskey
+            - --vault-secret-access-key-file=/secrets/service/vault.secretaccesskey
+            resources:
+              requests:
+                cpu: ${CPU_REQUEST}
+                memory: ${MEMORY_REQUEST}
+              limits:
+                cpu: ${CPU_LIMIT}
+                memory: ${MEMORY_LIMIT}
+            livenessProbe:
+              httpGet:
+                path: /api/kafkas_mgmt
+                port: 8000
+                scheme: HTTPS
+              initialDelaySeconds: 15
+              periodSeconds: 5
+            readinessProbe:
+              httpGet:
+                path: /healthcheck
+                port: 8083
+                scheme: HTTPS
+                httpHeaders:
+                - name: User-Agent
+                  value: Probe
+              initialDelaySeconds: 20
+              periodSeconds: 10
+          - name: envoy-sidecar
+            image: ${ENVOY_IMAGE}
+            imagePullPolicy: IfNotPresent
+            command:
+            - envoy
+            - --config-path
+            - /configs/envoy/main.yaml
+            ports:
+            - name: api-envoy
+              protocol: TCP
+              containerPort: 9001
+            - name: metrics-envoy
+              protocol: TCP
+              containerPort: 9000
+            volumeMounts:
+            - name: envoy-tls
+              mountPath: /secrets/tls
+            - name: envoy-config
+              mountPath: /configs/envoy
+            - name: envoy-unix-sockets
+              mountPath: /sockets
+            livenessProbe:
+              httpGet:
+                path: /ready
+                port: 9000
+              initialDelaySeconds: 10
+              timeoutSeconds: 1
+              periodSeconds: 10
+              successThreshold: 1
+              failureThreshold: 10
+            readinessProbe:
+              httpGet:
+                path: /ready
+                port: 9000
+              initialDelaySeconds: 10
+              timeoutSeconds: 1
+              periodSeconds: 10
+              successThreshold: 1
+              failureThreshold: 10
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: 250m
+              limits:
+                memory: 512Mi
+                cpu: 500m
+
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager
+      labels:
+        app: kas-fleet-manager
+        port: api
+      annotations:
+        description: Exposes and load balances the kas-fleet-manager pods
+        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-tls
+    spec:
+      selector:
+        app: kas-fleet-manager
+      ports:
+        - port: 8000
+          targetPort: 8000
+          protocol: TCP
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: kas-fleet-manager-envoy
+      labels:
+        app: kas-fleet-manager
+        port: api-envoy
+      annotations:
+        description: Exposes and load balances the kas-fleet-manager pods going through envoy beforehand
+        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-envoy-tls
+    spec:
+      selector:
+        app: kas-fleet-manager
+      ports:
+      - port: 9001
+        targetPort: 9001
+        protocol: TCP
+
+  # Services for diagnostic ports (not part of main service because we
+  # don't want exposing them externally through same route).
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager-metrics
+      labels:
+        app: kas-fleet-manager
+        port: metrics
+      annotations:
+        description: Exposes and load balances the ocm example service pods metrics endpoint
+        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-metrics-tls
+    spec:
+      selector:
+        app: kas-fleet-manager
+      ports:
+        - port: 8080
+          targetPort: 8080
+          name: metrics
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: kas-fleet-manager-healthcheck
+      labels:
+        app: kas-fleet-manager
+        port: healthcheck
+    spec:
+      selector:
+        app: kas-fleet-manager
+      ports:
+        - port: 8083
+          targetPort: 8083
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: kas-fleet-manager-envoy-metrics
+      labels:
+        app: kas-fleet-manager
+        port: metrics-envoy
+    spec:
+      selector:
+        app: kas-fleet-manager
+      ports:
+      - port: 9000
+        targetPort: 9000
+        name: metrics-envoy
