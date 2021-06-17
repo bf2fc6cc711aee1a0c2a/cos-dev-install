@@ -5,9 +5,6 @@ MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
 .DEFAULT_GOAL := all
 SHELL = bash
 
-## default source directory, assuming all bf2 projects are kept in the same basedir
-SOURCES_DIR ?= $(MKFILE_DIR)/work
-
 ## overlay directory name, empty by default to build base kustomizations
 OVERLAY ?=
 
@@ -16,6 +13,15 @@ KUBECTL_APPLY ?= false
 OUTPUT_DIR ?= $(MKFILE_DIR)/out
 OUTPUT_FILE ?= $(OVERLAY)out.yaml
 
+## default source directory, assuming all bf2 projects are kept in the same basedir
+SOURCES_DIR ?= $(MKFILE_DIR)/work
+
+## source repos and branches
+REPO_BASE ?= git@github.com:bf2fc6cc711aee1a0c2a
+REPO_BRANCH ?= main
+GIT_PULL ?= false
+#SOURCES_DIRS := $(MANIFEST_NAMES:%=$(SOURCES_DIR)/%)
+
 ## manifests
 # TODO add non-existent cos-fleetshard-meta-debezium main branch
 MANIFESTS_PATH := $(MKFILE_DIR)/manifests
@@ -23,26 +29,20 @@ MANIFEST_DIRS := $(wildcard $(MANIFESTS_PATH)/*)
 MANIFEST_NAMES := $(MANIFEST_DIRS:$(MANIFESTS_PATH)/%=%)
 MANIFEST_YMLS := $(MANIFEST_DIRS:%=%/*.yml)
 
-## source repos and branches
-REPO_BASE ?= git@github.com:bf2fc6cc711aee1a0c2a
-REPO_BRANCH ?= main
-GIT_PULL ?= false
-SOURCES_DIRS := $(MANIFEST_NAMES:%=$(SOURCES_DIR)/%/)
-
 ## kustomizations
 BASE_KUSTOMIZATIONS := $(MANIFEST_DIRS:%=%/kustomization.yaml)
 
-.PHONY: all checkout_branches checkout_repo_* kustomize $(MANIFEST_NAMES) clean clean-work
-
-## don't delete intermediate targets
-#.PRECIOUS: $(SOURCES_DIR)/%
+.PHONY: all clone clone_repo_* checkout_branches checkout_repo_* kustomize $(MANIFEST_NAMES) clean clean-work
 
 ## run everything
-all: | $(SOURCES_DIRS) checkout_branches kustomize
+all: | clone checkout_branches kustomize
 
-## checkout source from github if needed
-$(SOURCES_DIR)/%/:
-	git clone $(REPO_BASE)/$(notdir $(@D)).git -b $(REPO_BRANCH) $(@D)
+## clone repos
+clone: $(MANIFEST_NAMES:%=clone_repo_%)
+
+## clone repo if needed
+clone_repo_%:
+	if [[ ! -d $(SOURCES_DIR)/$* ]]; then git clone $(REPO_BASE)/$*.git -b $(REPO_BRANCH) $(SOURCES_DIR)/$* ; fi
 
 ## switch to required branches
 checkout_branches: $(MANIFEST_NAMES:%=checkout_repo_%)
@@ -79,13 +79,12 @@ CML_CATALOG_PREFIX := connector-catalog-camel-
 
 cos-fleet-catalog-camel: $(MANIFESTS_PATH)/cos-fleet-catalog-camel/configs
 
-$(CML_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-camel/cos-fleet-catalog-camel/src/generated/resources/
-	$(foreach CFG, $(wildcard $?/*), \
-		cp -R $(CFG) $(CML_CATALOG_DIR)/configs/$(subst cos-fleet-catalog-camel-,$(CML_CATALOG_PREFIX),$(notdir $(CFG))) ;)
-	cd $(CML_CATALOG_DIR) ; $(foreach CFG, $(subst cos-fleet-catalog-camel-,$(CML_CATALOG_PREFIX),$(notdir $(wildcard $?/*))), \
+$(CML_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-camel/etc/connectors/
+	cp -R $(wildcard $?/*) $(CML_CATALOG_DIR)/configs/
+	touch $(CML_CATALOG_DIR)/configs
+	cd $(CML_CATALOG_DIR) ; $(foreach CFG, $(notdir $(wildcard $?/*)), \
 		oc create configmap $(CFG) --from-file=configs/$(CFG) -o yaml --dry-run > $(CFG).yaml &&\
 		kustomize edit add resource $(CFG).yaml; )
-	touch $(CML_CATALOG_DIR)/configs/*
 
 # Debezium catalogs
 DBZ_CATALOG_DIR := $(MANIFESTS_PATH)/cos-fleet-catalog-debezium
@@ -94,8 +93,8 @@ DBZ_CATALOG_PREFIX := connector-catalog-debezium-
 cos-fleet-catalog-debezium: $(MANIFESTS_PATH)/cos-fleet-catalog-debezium/configs
 
 $(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/resources/META-INF/resources/
-	cp -R $(wildcard $?/*) $(DBZ_CATALOG_DIR)/configs
-	touch $(DBZ_CATALOG_DIR)/configs/*
+	cp -R $(wildcard $?/*) $(DBZ_CATALOG_DIR)/configs/
+	touch $(DBZ_CATALOG_DIR)/configs
 	cd $(DBZ_CATALOG_DIR) ; $(foreach CFG, $(notdir $(wildcard $?/*)), \
 		oc create configmap $(DBZ_CATALOG_PREFIX)$(CFG) --from-file=configs/$(CFG) -o yaml --dry-run > $(DBZ_CATALOG_PREFIX)$(CFG).yaml &&\
 		kustomize edit add resource $(DBZ_CATALOG_PREFIX)$(CFG).yaml; )
