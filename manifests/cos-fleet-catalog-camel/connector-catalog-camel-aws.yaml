@@ -133,17 +133,17 @@ data:
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
         "name" : "AWS S3 Sink",
-        "description" : "AWS S3  Sink",
+        "description" : "AWS S3 Sink",
         "version" : "0.1",
         "labels" : [ "sink" ],
         "channels" : [ "stable" ]
       },
       "channels" : {
         "stable" : {
-          "revision" : 1,
           "shard_metadata" : {
+            "connector_revision" : "1",
             "connector_type" : "sink",
-            "connector_image" : "quay.io/mcs_dev/aws-s3-sink:0.0.1",
+            "connector_image" : "quay.io/cos/aws-s3-sink-0.1:1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
@@ -285,17 +285,17 @@ data:
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
         "name" : "AWS S3 Source",
-        "description" : "AWS S3  Source",
+        "description" : "AWS S3 Source",
         "version" : "0.1",
         "labels" : [ "source" ],
         "channels" : [ "stable" ]
       },
       "channels" : {
         "stable" : {
-          "revision" : 1,
           "shard_metadata" : {
+            "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/mcs_dev/aws-s3-sink:0.0.1",
+            "connector_image" : "quay.io/cos/aws-s3-source-0.1:1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
@@ -444,10 +444,10 @@ data:
       },
       "channels" : {
         "stable" : {
-          "revision" : 1,
           "shard_metadata" : {
+            "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/mcs_dev/aws-sqs-source:0.0.1",
+            "connector_image" : "quay.io/cos/aws-sqs-source-0.1:1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"

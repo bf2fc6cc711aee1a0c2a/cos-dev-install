@@ -131,10 +131,10 @@
   },
   "channels" : {
     "stable" : {
-      "revision" : 1,
       "shard_metadata" : {
+        "connector_revision" : "1",
         "connector_type" : "source",
-        "connector_image" : "quay.io/mcs_dev/aws-sqs-source:0.0.1",
+        "connector_image" : "quay.io/cos/aws-sqs-source-0.1:1",
         "operators" : [ {
           "type" : "camel-connector-operator",
           "version" : "[1.0.0,2.0.0)"

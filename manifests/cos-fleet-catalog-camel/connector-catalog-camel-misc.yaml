@@ -36,6 +36,53 @@ data:
                   "default" : false
                 }
               }
+            },
+            "steps" : {
+              "type" : "array",
+              "items" : {
+                "oneOf" : [ {
+                  "type" : "object",
+                  "required" : [ "insert-field" ],
+                  "properties" : {
+                    "insert-field" : {
+                      "title" : "Insert Field Action",
+                      "description" : "Adds a custom field with a constant value to the message in transit",
+                      "required" : [ "field", "value" ],
+                      "properties" : {
+                        "field" : {
+                          "title" : "Field",
+                          "description" : "The name of the field to be added",
+                          "type" : "string"
+                        },
+                        "value" : {
+                          "title" : "Value",
+                          "description" : "The value of the field",
+                          "type" : "string"
+                        }
+                      },
+                      "type" : "object"
+                    }
+                  }
+                }, {
+                  "type" : "object",
+                  "required" : [ "extract-field" ],
+                  "properties" : {
+                    "extract-field" : {
+                      "title" : "Extract Field Action",
+                      "description" : "Extract a field from the body",
+                      "required" : [ "field" ],
+                      "properties" : {
+                        "field" : {
+                          "title" : "Field",
+                          "description" : "The name of the field to be added",
+                          "type" : "string"
+                        }
+                      },
+                      "type" : "object"
+                    }
+                  }
+                } ]
+              }
             }
           }
         },
@@ -50,17 +97,19 @@ data:
       },
       "channels" : {
         "stable" : {
-          "revision" : 1,
           "shard_metadata" : {
+            "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/mcs_dev/example-source:0.0.1",
+            "connector_image" : "quay.io/cos/example-source-0.1:1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
               "connector" : "injector-source",
-              "kafka" : "log-sink"
+              "kafka" : "log-sink",
+              "insert-field" : "insert-field-action",
+              "extract-field" : "extract-field-action"
             }
           }
         }
@@ -156,10 +205,10 @@ data:
       },
       "channels" : {
         "stable" : {
-          "revision" : 1,
           "shard_metadata" : {
+            "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/mcs_dev/injector-source:0.0.1",
+            "connector_image" : "quay.io/cos/injector-source-0.1:1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
@@ -271,10 +320,10 @@ data:
       },
       "channels" : {
         "stable" : {
-          "revision" : 1,
           "shard_metadata" : {
+            "connector_revision" : "1",
             "connector_type" : "sink",
-            "connector_image" : "quay.io/mcs_dev/log-sink:0.0.1",
+            "connector_image" : "quay.io/cos/log-sink-0.1:1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
