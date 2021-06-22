@@ -5,31 +5,17 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 02d58d3647605047968840aa0261f32e41337a44
+    app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-06-13 - 09:26:24 +0000
+    app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
     app.kubernetes.io/name: cos-fleetshard
-    app.kubernetes.io/version: 999-SNAPSHOT
+    app.kubernetes.io/version: latest
   name: cos-fleetshard
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  annotations:
-    prometheus.io/port: "8080"
-    prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 6bda2d2e6eb6a3abb58e5f8c7460ce9f8f9532f0
-    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-05-21 - 10:35:15 +0000
-    prometheus.io/scrape: "true"
-    prometheus.io/path: /q/metrics
-  labels:
-    app.kubernetes.io/name: cos-fleetshard-operator
-    app.kubernetes.io/version: 999-SNAPSHOT
-  name: cos-fleetshard-operator
+imagePullSecrets:
+- name: cos-pull-secret
 ---
 apiVersion: v1
 kind: Service
@@ -37,14 +23,14 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 02d58d3647605047968840aa0261f32e41337a44
+    app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-06-13 - 09:26:24 +0000
+    app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
     app.kubernetes.io/name: cos-fleetshard
-    app.kubernetes.io/version: 999-SNAPSHOT
+    app.kubernetes.io/version: latest
   name: cos-fleetshard
 spec:
   ports:
@@ -53,33 +39,68 @@ spec:
     targetPort: 8080
   selector:
     app.kubernetes.io/name: cos-fleetshard
-    app.kubernetes.io/version: 999-SNAPSHOT
+    app.kubernetes.io/version: latest
   type: ClusterIP
 ---
-apiVersion: v1
-kind: Service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  annotations:
-    prometheus.io/port: "8080"
-    prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 6bda2d2e6eb6a3abb58e5f8c7460ce9f8f9532f0
-    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-05-21 - 10:35:15 +0000
-    prometheus.io/scrape: "true"
-    prometheus.io/path: /q/metrics
-  labels:
-    app.kubernetes.io/name: cos-fleetshard-operator
-    app.kubernetes.io/version: 999-SNAPSHOT
   name: cos-fleetshard-operator
-spec:
-  ports:
-  - name: http
-    port: 9095
-    targetPort: 9095
-  selector:
-    app.kubernetes.io/name: cos-fleetshard-operator
-    app.kubernetes.io/version: 999-SNAPSHOT
-  type: ClusterIP
+rules:
+- apiGroups:
+  - cos.bf2.org
+  resources:
+  - managedconnectors
+  - managedconnectors/status
+  - managedconnectoroperators
+  - managedconnectoroperators/status
+  - managedconnectorclusters
+  - managedconnectorclusters/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kafka.strimzi.io
+  resources:
+  - kafkaconnects
+  - kafkaconnectors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - camel.apache.org
+  resources:
+  - kameletbindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -88,6 +109,8 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  resourceNames:
+  - addon-cos-fleetshard-operator-parameters
   resources:
   - secrets
   verbs:
@@ -96,33 +119,18 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: cos-fleetshard-operator-view
-roleRef:
-  kind: ClusterRole
-  apiGroup: rbac.authorization.k8s.io
-  name: view
-subjects:
-- kind: ServiceAccount
   name: cos-fleetshard-operator
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: cos-fleetshard-operator-view-secrets
 roleRef:
   kind: Role
   apiGroup: rbac.authorization.k8s.io
-  name: view-secrets
+  name: cos-fleetshard-operator
 subjects:
 - kind: ServiceAccount
-  name: cos-fleetshard-operator
+  name: cos-fleetshard
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  labels:
-    app.kubernetes.io/name: cos-fleetshard
-    app.kubernetes.io/version: 999-SNAPSHOT
   name: cos-fleetshard-view
 roleRef:
   kind: ClusterRole
@@ -135,9 +143,6 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  labels:
-    app.kubernetes.io/name: cos-fleetshard
-    app.kubernetes.io/version: 999-SNAPSHOT
   name: cos-fleetshard-view-secrets
 roleRef:
   kind: Role
@@ -153,42 +158,50 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 02d58d3647605047968840aa0261f32e41337a44
+    app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-06-13 - 09:26:24 +0000
+    app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
     app.kubernetes.io/name: cos-fleetshard
-    app.kubernetes.io/version: 999-SNAPSHOT
+    app.kubernetes.io/version: latest
   name: cos-fleetshard
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: cos-fleetshard
-      app.kubernetes.io/version: 999-SNAPSHOT
+      app.kubernetes.io/version: latest
   template:
     metadata:
       annotations:
         prometheus.io/port: "8080"
         prometheus.io/scheme: http
-        app.quarkus.io/commit-id: 02d58d3647605047968840aa0261f32e41337a44
+        app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
         app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-        app.quarkus.io/build-timestamp: 2021-06-13 - 09:26:24 +0000
+        app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
         prometheus.io/scrape: "true"
         prometheus.io/path: /q/metrics
       labels:
         app.kubernetes.io/name: cos-fleetshard
-        app.kubernetes.io/version: 999-SNAPSHOT
+        app.kubernetes.io/version: latest
     spec:
       containers:
       - env:
+        - name: COS_CONNECTORS_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: COS_CLUSTER_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: quay.io/mcs_dev/cos-fleetshard:999-SNAPSHOT
+        image: quay.io/rhoas/cos-fleetshard:latest
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
@@ -216,73 +229,3 @@ spec:
           successThreshold: 1
           timeoutSeconds: 10
       serviceAccount: cos-fleetshard
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    prometheus.io/port: "8080"
-    prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 6bda2d2e6eb6a3abb58e5f8c7460ce9f8f9532f0
-    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-05-21 - 10:35:15 +0000
-    prometheus.io/scrape: "true"
-    prometheus.io/path: /q/metrics
-  labels:
-    app.kubernetes.io/name: cos-fleetshard-operator
-    app.kubernetes.io/version: 999-SNAPSHOT
-  name: cos-fleetshard-operator
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: cos-fleetshard-operator
-      app.kubernetes.io/version: 999-SNAPSHOT
-  template:
-    metadata:
-      annotations:
-        prometheus.io/port: "8080"
-        prometheus.io/scheme: http
-        app.quarkus.io/commit-id: 6bda2d2e6eb6a3abb58e5f8c7460ce9f8f9532f0
-        app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-        app.quarkus.io/build-timestamp: 2021-05-21 - 10:35:15 +0000
-        prometheus.io/scrape: "true"
-        prometheus.io/path: /q/metrics
-      labels:
-        app.kubernetes.io/name: cos-fleetshard-operator
-        app.kubernetes.io/version: 999-SNAPSHOT
-    spec:
-      containers:
-      - env:
-        - name: KUBERNETES_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        image: org.bf2/cos-fleetshard-operator:999-SNAPSHOT
-        imagePullPolicy: Always
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /q/health/live
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 0
-          periodSeconds: 30
-          successThreshold: 1
-          timeoutSeconds: 10
-        name: cos-fleetshard-operator
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /q/health/ready
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 0
-          periodSeconds: 30
-          successThreshold: 1
-          timeoutSeconds: 10
-      serviceAccount: cos-fleetshard-operator

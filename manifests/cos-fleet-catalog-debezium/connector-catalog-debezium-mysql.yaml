@@ -366,20 +366,20 @@ data:
               "x-name": "snapshot.select.statement.overrides",
               "x-category": "CONNECTOR_SNAPSHOT"
             },
-            "_dbz.message.key.format" : {
+            "+dbz.message.key.format" : {
               "title" : "Kafka Message Key Format",
               "description" : "The serialization format for the Kafka message key.",
               "type" : "string",
               "enum" : [ "JSON", "JSON without Schema", "AVRO"],
-              "x-name" : "_dbz.message.key.format",
+              "x-name" : "+dbz.message.key.format",
               "x-category" : "CONNECTOR"
             },
-            "_dbz.message.value.format" : {
+            "+dbz.message.value.format" : {
               "title" : "Kafka Message Value Format",
               "description" : "The serialization format for the Kafka message value.",
               "type" : "string",
               "enum" : [ "JSON", "JSON without Schema", "AVRO"],
-              "x-name" : "_dbz.message.value.format",
+              "x-name" : "+dbz.message.value.format",
               "x-category" : "CONNECTOR"
             },
             "include.schema.changes": {
