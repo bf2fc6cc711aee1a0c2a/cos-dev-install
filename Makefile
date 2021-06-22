@@ -58,11 +58,11 @@ kustomize: $(MANIFEST_NAMES) $(BASE_KUSTOMIZATIONS)
 
 .FORCE:
 
+$(BASE_KUSTOMIZATIONS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $(@D))-$(OUTPUT_FILE)
 $(BASE_KUSTOMIZATIONS): .FORCE | $(OUTPUT_DIR)
+	kubectl kustomize $(@D)/$(OVERLAY) -o $(RESOURCES_FILE)
 ifeq ($(KUBECTL_APPLY),true)
-	kubectl apply --kustomize $(@D)/$(OVERLAY)
-else
-	kubectl kustomize $(@D)/$(OVERLAY) -o $(OUTPUT_DIR)/$(notdir $(@D))-$(OUTPUT_FILE)
+	oc apply -f $(RESOURCES_FILE)
 endif
 
 ## make sure output dir exists
@@ -104,16 +104,35 @@ FLTS_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard
 
 cos-fleetshard: $(FLTS_MANIFEST)
 
-$(FLTS_MANIFEST): $(SOURCES_DIR)/cos-fleetshard/cos-fleetshard-operator/src/main/kubernetes/
+$(FLTS_MANIFEST): $(SOURCES_DIR)/cos-fleetshard/etc/kubernetes/
 	cp -R $(wildcard $?/*.yml) $(FLTS_MANIFEST)
 	touch $(FLTS_MANIFEST)
 	cd $(FLTS_MANIFEST) ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
 		kustomize edit add resource $(notdir $(YML)); )
 
-cos-fleetshard-meta-camel:
+# Camel meta service
+META_CML_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard-meta-camel
 
-cos-fleetshard-meta-debezium:
+cos-fleetshard-meta-camel: $(META_CML_MANIFEST)
 
+$(META_CML_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-camel/etc/kubernetes/
+	cp -R $(wildcard $?/*.yml) $(META_CML_MANIFEST)
+	touch $(META_CML_MANIFEST)
+	cd $(META_CML_MANIFEST) ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
+		kustomize edit add resource $(notdir $(YML)); )
+
+# Debezium meta service
+META_DBZ_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard-meta-debezium
+
+cos-fleetshard-meta-debezium: $(META_DBZ_MANIFEST)
+
+$(META_DBZ_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-debezium/etc/kubernetes/
+	cp -R $(wildcard $?/*.yml) $(META_DBZ_MANIFEST)
+	touch $(META_DBZ_MANIFEST)
+	cd $(META_DBZ_MANIFEST) ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
+		kustomize edit add resource $(notdir $(YML)); )
+
+# TODO
 cos-ui:
 
 KAS_DIR := $(MANIFESTS_PATH)/kas-fleet-manager
@@ -137,9 +156,8 @@ clean:
 	cd $(MANIFESTS_PATH)/cos-fleet-catalog-camel/ && rm -Rf configs/* && rm -f $(CML_CATALOG_PREFIX)*.yaml
 	cd $(MANIFESTS_PATH)/cos-fleet-catalog-debezium/ && rm -Rf configs/* && rm -f $(DBZ_CATALOG_PREFIX)*.yaml
 	cd $(MANIFESTS_PATH)/cos-fleetshard/ && rm -f *.yml
-#	cd $(MANIFESTS_PATH)/cos-fleetshard-meta-camel/ && rm -f *.yml
-#	cd $(MANIFESTS_PATH)/cos-type-service-camel/ && rm -f *.yml
-#	cd $(MANIFESTS_PATH)/cos-type-service-debezium/ && rm -f *.yml
+	cd $(MANIFESTS_PATH)/cos-fleetshard-meta-camel/ && rm -f *.yml
+	cd $(MANIFESTS_PATH)/cos-fleetshard-meta-debezium/ && rm -f *.yml
 #	cd $(MANIFESTS_PATH)/cos-ui/ && rm *.yml
 	cd $(MANIFESTS_PATH)/kas-fleet-manager/ && rm -f templates/*.yml
 

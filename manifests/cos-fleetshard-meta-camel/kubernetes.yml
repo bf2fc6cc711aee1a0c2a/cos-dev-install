@@ -1,0 +1,129 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    prometheus.io/port: "8080"
+    prometheus.io/scheme: http
+    app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
+    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
+    app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /q/metrics
+  labels:
+    app: cos-fleetshard-meta-camel
+    component: cos-meta-camel
+    app.kubernetes.io/name: cos-fleetshard-meta-camel
+    app.kubernetes.io/version: latest
+  name: cos-fleetshard-meta-camel
+imagePullSecrets:
+- name: cos-pull-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "8080"
+    prometheus.io/scheme: http
+    app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
+    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
+    app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /q/metrics
+  labels:
+    app.kubernetes.io/name: cos-fleetshard-meta-camel
+    app.kubernetes.io/version: latest
+    app: cos-fleetshard-meta-camel
+    component: cos-meta-camel
+  name: cos-fleetshard-meta-camel
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: cos-fleetshard-meta-camel
+    app.kubernetes.io/version: latest
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    prometheus.io/port: "8080"
+    prometheus.io/scheme: http
+    app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
+    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
+    app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /q/metrics
+  labels:
+    app: cos-fleetshard-meta-camel
+    component: cos-meta-camel
+    app.kubernetes.io/name: cos-fleetshard-meta-camel
+    app.kubernetes.io/version: latest
+  name: cos-fleetshard-meta-camel
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cos-fleetshard-meta-camel
+      app.kubernetes.io/version: latest
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: http
+        app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
+        app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
+        app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /q/metrics
+      labels:
+        app: cos-fleetshard-meta-camel
+        component: cos-meta-camel
+        app.kubernetes.io/name: cos-fleetshard-meta-camel
+        app.kubernetes.io/version: latest
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: QUARKUS_LOG_CONSOLE_JSON
+          value: "false"
+        image: quay.io/rhoas/cos-fleetshard-meta-camel:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /q/health/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: cos-fleetshard-meta-camel
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /q/health/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 10
+        resources:
+          limits:
+            memory: 256Mi
+          requests:
+            memory: 20Mi
+      serviceAccount: cos-fleetshard-meta-camel
