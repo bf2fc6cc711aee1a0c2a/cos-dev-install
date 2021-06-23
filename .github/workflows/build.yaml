@@ -20,11 +20,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: openshift/origin-cli:latest
+    #container: openshift/origin-cli:latest
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - name: Checkout project
+        uses: actions/checkout@v2
 
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v1
