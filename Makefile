@@ -9,7 +9,7 @@ SHELL = bash
 OVERLAY ?=
 
 ## save or apply kustomized resources
-KUBECTL_APPLY ?= false
+OC_APPLY ?= false
 OUTPUT_DIR ?= $(MKFILE_DIR)/out
 OUTPUT_FILE ?= $(OVERLAY)out.yaml
 
@@ -60,8 +60,8 @@ kustomize: $(MANIFEST_NAMES) $(BASE_KUSTOMIZATIONS)
 
 $(BASE_KUSTOMIZATIONS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $(@D))-$(OUTPUT_FILE)
 $(BASE_KUSTOMIZATIONS): .FORCE | $(OUTPUT_DIR)
-	kubectl kustomize $(@D)/$(OVERLAY) -o $(RESOURCES_FILE)
-ifeq ($(KUBECTL_APPLY),true)
+	kustomize build $(@D)/$(OVERLAY) -o $(RESOURCES_FILE)
+ifeq ($(OC_APPLY),true)
 	oc apply -f $(RESOURCES_FILE)
 endif
 
