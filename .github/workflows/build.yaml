@@ -30,6 +30,16 @@ jobs:
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v1
 
+      - name: Install OpenShift CLI tools
+        uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          source: "mirror"
+          skip_cache: "true"
+          oc: "latest"
+      - name: Verify OpenShift CLI tools
+        run: |
+          oc version
+
       - name: Run make
         run: make clean all
 
