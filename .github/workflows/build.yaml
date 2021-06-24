@@ -12,6 +12,7 @@ on:
 
 env:
   LANG: en_US.UTF-8
+  REPO_BASE=https://github.com/bf2fc6cc711aee1a0c2a
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -36,6 +37,7 @@ jobs:
           source: "mirror"
           skip_cache: "true"
           oc: "latest"
+
       - name: Verify OpenShift CLI tools
         run: |
           oc version
