@@ -5,9 +5,9 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
+    app.quarkus.io/commit-id: b8c009dbd18cab7dfb8efbced3253541ad4e6441
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
+    app.quarkus.io/build-timestamp: 2021-06-24 - 20:50:54 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -23,9 +23,9 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
+    app.quarkus.io/commit-id: b8c009dbd18cab7dfb8efbced3253541ad4e6441
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
+    app.quarkus.io/build-timestamp: 2021-06-24 - 20:50:54 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -103,20 +103,6 @@ rules:
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: view-secrets
-rules:
-- apiGroups:
-  - ""
-  resourceNames:
-  - addon-cos-fleetshard-operator-parameters
-  resources:
-  - secrets
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: cos-fleetshard-operator
@@ -140,27 +126,15 @@ subjects:
 - kind: ServiceAccount
   name: cos-fleetshard
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: cos-fleetshard-view-secrets
-roleRef:
-  kind: Role
-  apiGroup: rbac.authorization.k8s.io
-  name: view-secrets
-subjects:
-- kind: ServiceAccount
-  name: cos-fleetshard
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
+    app.quarkus.io/commit-id: b8c009dbd18cab7dfb8efbced3253541ad4e6441
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
+    app.quarkus.io/build-timestamp: 2021-06-24 - 20:50:54 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -178,9 +152,9 @@ spec:
       annotations:
         prometheus.io/port: "8080"
         prometheus.io/scheme: http
-        app.quarkus.io/commit-id: 17db22f26480ea9efc1e8fd31da4c62154846d68
+        app.quarkus.io/commit-id: b8c009dbd18cab7dfb8efbced3253541ad4e6441
         app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard.git
-        app.quarkus.io/build-timestamp: 2021-06-22 - 19:00:14 +0000
+        app.quarkus.io/build-timestamp: 2021-06-24 - 20:50:54 +0000
         prometheus.io/scrape: "true"
         prometheus.io/path: /q/metrics
       labels:
@@ -189,18 +163,12 @@ spec:
     spec:
       containers:
       - env:
-        - name: COS_CONNECTORS_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: COS_CLUSTER_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: SMALLRYE_CONFIG_LOCATIONS
+          value: /mnt/app-config-map,/mnt/app-secret
         image: quay.io/rhoas/cos-fleetshard:latest
         imagePullPolicy: Always
         livenessProbe:
@@ -228,4 +196,24 @@ spec:
           periodSeconds: 30
           successThreshold: 1
           timeoutSeconds: 10
+        volumeMounts:
+        - mountPath: /mnt/app-secret
+          name: app-secret
+          readOnly: false
+          subPath: ""
+        - mountPath: /mnt/app-config-map
+          name: app-config-map
+          readOnly: false
+          subPath: ""
       serviceAccount: cos-fleetshard
+      volumes:
+      - name: app-secret
+        secret:
+          defaultMode: 384
+          optional: false
+          secretName: addon-cos-fleetshard-operator-parameters
+      - configMap:
+          defaultMode: 384
+          name: cos-fleetshard-config
+          optional: false
+        name: app-config-map

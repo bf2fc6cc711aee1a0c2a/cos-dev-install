@@ -5,32 +5,67 @@
       "properties" : {
         "connector" : {
           "type" : "object",
-          "title" : "Injector",
-          "required" : [ ],
+          "title" : "MariaDB Source",
+          "required" : [ "serverName", "username", "password", "query", "databaseName" ],
           "properties" : {
-            "delay" : {
-              "title" : "Delay",
-              "description" : "Delay",
+            "serverName" : {
+              "title" : "Server Name",
+              "description" : "Server Name for the data source",
+              "type" : "string",
+              "example" : "localhost"
+            },
+            "port" : {
+              "title" : "Port",
+              "description" : "Server Port for the data source",
+              "type" : "string",
+              "default" : 3306
+            },
+            "username" : {
+              "title" : "Username",
+              "description" : "The username to use for accessing a secured MariaDB Database",
               "type" : "string"
+            },
+            "password" : {
+              "title" : "Password",
+              "oneOf" : [ {
+                "title" : "Password",
+                "description" : "The password to use for accessing a secured MariaDB Database",
+                "type" : "string",
+                "format" : "password"
+              }, {
+                "description" : "An opaque reference to the password",
+                "type" : "object",
+                "properties" : { }
+              } ]
+            },
+            "query" : {
+              "title" : "Query",
+              "description" : "The Query to execute against the MariaDB Database",
+              "type" : "string",
+              "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+            },
+            "databaseName" : {
+              "title" : "Database Name",
+              "description" : "The Database Name we are pointing",
+              "type" : "string"
+            },
+            "consumedQuery" : {
+              "title" : "Consumed Query",
+              "description" : "A query to run on a tuple consumed",
+              "type" : "string",
+              "example" : "DELETE FROM accounts where user_id = :#user_id"
             }
           }
         },
         "kafka" : {
           "type" : "object",
-          "title" : "Log",
-          "required" : [ ],
+          "title" : "Managed Kafka Sink",
+          "required" : [ "topic" ],
           "properties" : {
-            "multiLine" : {
-              "title" : "Multi Line",
-              "description" : "Multi Line",
-              "type" : "boolean",
-              "default" : false
-            },
-            "showAll" : {
-              "title" : "Show All",
-              "description" : "Show All",
-              "type" : "boolean",
-              "default" : false
+            "topic" : {
+              "title" : "Topic names",
+              "description" : "Comma separated list of Kafka topic names",
+              "type" : "string"
             }
           }
         },
@@ -83,11 +118,11 @@
         }
       }
     },
-    "id" : "example_source_0.1",
+    "id" : "mariadb_source_0.1",
     "kind" : "ConnectorType",
     "icon_href" : "TODO",
-    "name" : "Example Source",
-    "description" : "Example Source",
+    "name" : "MariaDB Source",
+    "description" : "MariaDB Source",
     "version" : "0.1",
     "labels" : [ "source" ],
     "channels" : [ "stable" ]
@@ -97,14 +132,14 @@
       "shard_metadata" : {
         "connector_revision" : "1",
         "connector_type" : "source",
-        "connector_image" : "quay.io/cos/example-source-0.1:1",
+        "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-mariadb-source-0.1",
         "operators" : [ {
           "type" : "camel-connector-operator",
           "version" : "[1.0.0,2.0.0)"
         } ],
         "kamelets" : {
-          "connector" : "injector-source",
-          "kafka" : "log-sink",
+          "connector" : "mariadb-source",
+          "kafka" : "managed-kafka-sink",
           "insert-field" : "insert-field-action",
           "extract-field" : "extract-field-action"
         }

@@ -5,13 +5,45 @@
       "properties" : {
         "connector" : {
           "type" : "object",
-          "title" : "Injector",
-          "required" : [ ],
+          "title" : "AWS Kinesis Source",
+          "required" : [ "stream", "accessKey", "secretKey", "region" ],
           "properties" : {
-            "delay" : {
-              "title" : "Delay",
-              "description" : "Delay",
+            "stream" : {
+              "title" : "Stream Name",
+              "description" : "The Kinesis stream that you want to access (needs to be created in advance)",
               "type" : "string"
+            },
+            "accessKey" : {
+              "title" : "Access Key",
+              "oneOf" : [ {
+                "title" : "Access Key",
+                "description" : "The access key obtained from AWS",
+                "type" : "string",
+                "format" : "password"
+              }, {
+                "description" : "An opaque reference to the accessKey",
+                "type" : "object",
+                "properties" : { }
+              } ]
+            },
+            "secretKey" : {
+              "title" : "Secret Key",
+              "oneOf" : [ {
+                "title" : "Secret Key",
+                "description" : "The secret key obtained from AWS",
+                "type" : "string",
+                "format" : "password"
+              }, {
+                "description" : "An opaque reference to the secretKey",
+                "type" : "object",
+                "properties" : { }
+              } ]
+            },
+            "region" : {
+              "title" : "AWS Region",
+              "description" : "The AWS region to connect to",
+              "type" : "string",
+              "example" : "eu-west-1"
             }
           }
         },
@@ -76,11 +108,11 @@
         }
       }
     },
-    "id" : "injector_source_0.1",
+    "id" : "aws_kinesis_source_0.1",
     "kind" : "ConnectorType",
     "icon_href" : "TODO",
-    "name" : "Injector Source",
-    "description" : "Injector Source",
+    "name" : "AWS Kinesis Source",
+    "description" : "AWS Kinesis Source",
     "version" : "0.1",
     "labels" : [ "source" ],
     "channels" : [ "stable" ]
@@ -90,13 +122,13 @@
       "shard_metadata" : {
         "connector_revision" : "1",
         "connector_type" : "source",
-        "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-injector-source-0.1",
+        "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-kinesis-source-0.1",
         "operators" : [ {
           "type" : "camel-connector-operator",
           "version" : "[1.0.0,2.0.0)"
         } ],
         "kamelets" : {
-          "connector" : "injector-source",
+          "connector" : "aws-kinesis-source",
           "kafka" : "managed-kafka-sink",
           "insert-field" : "insert-field-action",
           "extract-field" : "extract-field-action"

@@ -5,13 +5,55 @@
       "properties" : {
         "connector" : {
           "type" : "object",
-          "title" : "Injector",
-          "required" : [ ],
+          "title" : "PostgreSQL Source",
+          "required" : [ "serverName", "username", "password", "query", "databaseName" ],
           "properties" : {
-            "delay" : {
-              "title" : "Delay",
-              "description" : "Delay",
+            "serverName" : {
+              "title" : "Server Name",
+              "description" : "Server Name for the data source",
+              "type" : "string",
+              "example" : "localhost"
+            },
+            "port" : {
+              "title" : "Port",
+              "description" : "Server Port for the data source",
+              "type" : "string",
+              "default" : 5432
+            },
+            "username" : {
+              "title" : "Username",
+              "description" : "The username to use for accessing a secured PostgreSQL Database",
               "type" : "string"
+            },
+            "password" : {
+              "title" : "Password",
+              "oneOf" : [ {
+                "title" : "Password",
+                "description" : "The password to use for accessing a secured PostgreSQL Database",
+                "type" : "string",
+                "format" : "password"
+              }, {
+                "description" : "An opaque reference to the password",
+                "type" : "object",
+                "properties" : { }
+              } ]
+            },
+            "query" : {
+              "title" : "Query",
+              "description" : "The Query to execute against the PostgreSQL Database",
+              "type" : "string",
+              "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+            },
+            "databaseName" : {
+              "title" : "Database Name",
+              "description" : "The Database Name we are pointing",
+              "type" : "string"
+            },
+            "consumedQuery" : {
+              "title" : "Consumed Query",
+              "description" : "A query to run on a tuple consumed",
+              "type" : "string",
+              "example" : "DELETE FROM accounts where user_id = :#user_id"
             }
           }
         },
@@ -76,11 +118,11 @@
         }
       }
     },
-    "id" : "injector_source_0.1",
+    "id" : "postgresql_source_0.1",
     "kind" : "ConnectorType",
     "icon_href" : "TODO",
-    "name" : "Injector Source",
-    "description" : "Injector Source",
+    "name" : "PostgreSQL Source",
+    "description" : "PostgreSQL Source",
     "version" : "0.1",
     "labels" : [ "source" ],
     "channels" : [ "stable" ]
@@ -90,13 +132,13 @@
       "shard_metadata" : {
         "connector_revision" : "1",
         "connector_type" : "source",
-        "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-injector-source-0.1",
+        "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-postgresql-source-0.1",
         "operators" : [ {
           "type" : "camel-connector-operator",
           "version" : "[1.0.0,2.0.0)"
         } ],
         "kamelets" : {
-          "connector" : "injector-source",
+          "connector" : "postgresql-source",
           "kafka" : "managed-kafka-sink",
           "insert-field" : "insert-field-action",
           "extract-field" : "extract-field-action"

@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-  aws_kinesis_sink_0.1.json: |-
+  mariadb_sink_0.1.json: |-
     {
       "connector_type" : {
         "json_schema" : {
@@ -8,45 +8,49 @@ data:
           "properties" : {
             "connector" : {
               "type" : "object",
-              "title" : "AWS Kinesis Sink",
-              "required" : [ "stream", "accessKey", "secretKey", "region" ],
+              "title" : "MariaDB Sink",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
               "properties" : {
-                "stream" : {
-                  "title" : "Stream Name",
-                  "description" : "The Kinesis stream that you want to access (needs to be created in advance)",
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 3306
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured MariaDB Database",
                   "type" : "string"
                 },
-                "accessKey" : {
-                  "title" : "Access Key",
+                "password" : {
+                  "title" : "Password",
                   "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS",
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured MariaDB Database",
                     "type" : "string",
                     "format" : "password"
                   }, {
-                    "description" : "An opaque reference to the accessKey",
+                    "description" : "An opaque reference to the password",
                     "type" : "object",
                     "properties" : { }
                   } ]
                 },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to",
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the MariaDB Database",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+                },
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
                 }
               }
             },
@@ -111,11 +115,11 @@ data:
             }
           }
         },
-        "id" : "aws_kinesis_sink_0.1",
+        "id" : "mariadb_sink_0.1",
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
-        "name" : "AWS Kinesis Sink",
-        "description" : "AWS Kinesis Sink",
+        "name" : "MariaDB Sink",
+        "description" : "MariaDB Sink",
         "version" : "0.1",
         "labels" : [ "sink" ],
         "channels" : [ "stable" ]
@@ -125,13 +129,13 @@ data:
           "shard_metadata" : {
             "connector_revision" : "1",
             "connector_type" : "sink",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-kinesis-sink-0.1",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-mariadb-sink-0.1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
-              "connector" : "aws-kinesis-sink",
+              "connector" : "mariadb-sink",
               "kafka" : "managed-kafka-source",
               "insert-field" : "insert-field-action",
               "extract-field" : "extract-field-action"
@@ -140,7 +144,7 @@ data:
         }
       }
     }
-  aws_kinesis_source_0.1.json: |-
+  mariadb_source_0.1.json: |-
     {
       "connector_type" : {
         "json_schema" : {
@@ -148,45 +152,55 @@ data:
           "properties" : {
             "connector" : {
               "type" : "object",
-              "title" : "AWS Kinesis Source",
-              "required" : [ "stream", "accessKey", "secretKey", "region" ],
+              "title" : "MariaDB Source",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
               "properties" : {
-                "stream" : {
-                  "title" : "Stream Name",
-                  "description" : "The Kinesis stream that you want to access (needs to be created in advance)",
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 3306
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured MariaDB Database",
                   "type" : "string"
                 },
-                "accessKey" : {
-                  "title" : "Access Key",
+                "password" : {
+                  "title" : "Password",
                   "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS",
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured MariaDB Database",
                     "type" : "string",
                     "format" : "password"
                   }, {
-                    "description" : "An opaque reference to the accessKey",
+                    "description" : "An opaque reference to the password",
                     "type" : "object",
                     "properties" : { }
                   } ]
                 },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to",
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the MariaDB Database",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+                },
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
+                },
+                "consumedQuery" : {
+                  "title" : "Consumed Query",
+                  "description" : "A query to run on a tuple consumed",
+                  "type" : "string",
+                  "example" : "DELETE FROM accounts where user_id = :#user_id"
                 }
               }
             },
@@ -251,11 +265,11 @@ data:
             }
           }
         },
-        "id" : "aws_kinesis_source_0.1",
+        "id" : "mariadb_source_0.1",
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
-        "name" : "AWS Kinesis Source",
-        "description" : "AWS Kinesis Source",
+        "name" : "MariaDB Source",
+        "description" : "MariaDB Source",
         "version" : "0.1",
         "labels" : [ "source" ],
         "channels" : [ "stable" ]
@@ -265,13 +279,13 @@ data:
           "shard_metadata" : {
             "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-kinesis-source-0.1",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-mariadb-source-0.1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
-              "connector" : "aws-kinesis-source",
+              "connector" : "mariadb-source",
               "kafka" : "managed-kafka-sink",
               "insert-field" : "insert-field-action",
               "extract-field" : "extract-field-action"
@@ -280,7 +294,7 @@ data:
         }
       }
     }
-  aws_s3_sink_0.1.json: |-
+  mysql_sink_0.1.json: |-
     {
       "connector_type" : {
         "json_schema" : {
@@ -288,63 +302,49 @@ data:
           "properties" : {
             "connector" : {
               "type" : "object",
-              "title" : "AWS S3 Sink",
-              "required" : [ "bucketNameOrArn", "accessKey", "secretKey", "region" ],
+              "title" : "MySQL Sink",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
               "properties" : {
-                "bucketNameOrArn" : {
-                  "title" : "Bucket Name",
-                  "description" : "The S3 Bucket name or ARN.",
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 3306
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured MySQL Database",
                   "type" : "string"
                 },
-                "accessKey" : {
-                  "title" : "Access Key",
+                "password" : {
+                  "title" : "Password",
                   "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS.",
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured MySQL Database",
                     "type" : "string",
                     "format" : "password"
                   }, {
-                    "description" : "An opaque reference to the accessKey",
+                    "description" : "An opaque reference to the password",
                     "type" : "object",
                     "properties" : { }
                   } ]
                 },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS.",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to.",
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the MySQL Database",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
                 },
-                "overrideEndpoint" : {
-                  "title" : "Override Endpoint",
-                  "description" : "Set the need for overidding the endpoint. This option needs to be used in combination with uriEndpointOverride.",
-                  "type" : "boolean",
-                  "default" : false
-                },
-                "uriEndpointOverride" : {
-                  "title" : "Override Endpoint URI",
-                  "description" : "Set the overriding uri endpoint. This option needs to be used in combination with overrideEndpoint option.",
-                  "type" : "string",
-                  "example" : "http://another-s3-endpoint:9000"
-                },
-                "autoCreateBucket" : {
-                  "title" : "Autocreate Bucket",
-                  "description" : "Setting the autocreation of the S3 bucket bucketName.",
-                  "type" : "boolean",
-                  "default" : false
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
                 }
               }
             },
@@ -409,11 +409,11 @@ data:
             }
           }
         },
-        "id" : "aws_s3_sink_0.1",
+        "id" : "mysql_sink_0.1",
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
-        "name" : "AWS S3 Sink",
-        "description" : "AWS S3 Sink",
+        "name" : "MySQL Sink",
+        "description" : "MySQL Sink",
         "version" : "0.1",
         "labels" : [ "sink" ],
         "channels" : [ "stable" ]
@@ -423,13 +423,13 @@ data:
           "shard_metadata" : {
             "connector_revision" : "1",
             "connector_type" : "sink",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-s3-sink-0.1",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-mysql-sink-0.1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
-              "connector" : "aws-s3-sink",
+              "connector" : "mysql-sink",
               "kafka" : "managed-kafka-source",
               "insert-field" : "insert-field-action",
               "extract-field" : "extract-field-action"
@@ -438,7 +438,7 @@ data:
         }
       }
     }
-  aws_s3_source_0.1.json: |-
+  mysql_source_0.1.json: |-
     {
       "connector_type" : {
         "json_schema" : {
@@ -446,57 +446,55 @@ data:
           "properties" : {
             "connector" : {
               "type" : "object",
-              "title" : "AWS S3 Source",
-              "required" : [ "bucketNameOrArn", "accessKey", "secretKey", "region" ],
+              "title" : "MySQL Source",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
               "properties" : {
-                "bucketNameOrArn" : {
-                  "title" : "Bucket Name",
-                  "description" : "The S3 Bucket name or ARN",
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 3306
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured MySQL Database",
                   "type" : "string"
                 },
-                "deleteAfterRead" : {
-                  "title" : "Auto-delete Objects",
-                  "description" : "Delete objects after consuming them",
-                  "type" : "boolean",
-                  "default" : true
-                },
-                "accessKey" : {
-                  "title" : "Access Key",
+                "password" : {
+                  "title" : "Password",
                   "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS",
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured MySQL Database",
                     "type" : "string",
                     "format" : "password"
                   }, {
-                    "description" : "An opaque reference to the accessKey",
+                    "description" : "An opaque reference to the password",
                     "type" : "object",
                     "properties" : { }
                   } ]
                 },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to",
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the MySQL Database",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
                 },
-                "autoCreateBucket" : {
-                  "title" : "Autocreate Bucket",
-                  "description" : "Setting the autocreation of the S3 bucket bucketName.",
-                  "type" : "boolean",
-                  "default" : false
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
+                },
+                "consumedQuery" : {
+                  "title" : "Consumed Query",
+                  "description" : "A query to run on a tuple consumed",
+                  "type" : "string",
+                  "example" : "DELETE FROM accounts where user_id = :#user_id"
                 }
               }
             },
@@ -561,11 +559,11 @@ data:
             }
           }
         },
-        "id" : "aws_s3_source_0.1",
+        "id" : "mysql_source_0.1",
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
-        "name" : "AWS S3 Source",
-        "description" : "AWS S3 Source",
+        "name" : "MySQL Source",
+        "description" : "MySQL Source",
         "version" : "0.1",
         "labels" : [ "source" ],
         "channels" : [ "stable" ]
@@ -575,13 +573,13 @@ data:
           "shard_metadata" : {
             "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-s3-source-0.1",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-mysql-source-0.1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
-              "connector" : "aws-s3-source",
+              "connector" : "mysql-source",
               "kafka" : "managed-kafka-sink",
               "insert-field" : "insert-field-action",
               "extract-field" : "extract-field-action"
@@ -590,7 +588,7 @@ data:
         }
       }
     }
-  aws_sns_sink_0.1.json: |-
+  postgresql_sink_0.1.json: |-
     {
       "connector_type" : {
         "json_schema" : {
@@ -598,51 +596,49 @@ data:
           "properties" : {
             "connector" : {
               "type" : "object",
-              "title" : "AWS SNS Sink",
-              "required" : [ "topicNameOrArn", "accessKey", "secretKey", "region" ],
+              "title" : "PostgreSQL Sink",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
               "properties" : {
-                "topicNameOrArn" : {
-                  "title" : "Topic Name",
-                  "description" : "The SQS Topic name or ARN",
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 5432
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured PostgreSQL Database",
                   "type" : "string"
                 },
-                "accessKey" : {
-                  "title" : "Access Key",
+                "password" : {
+                  "title" : "Password",
                   "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS",
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured PostgreSQL Database",
                     "type" : "string",
                     "format" : "password"
                   }, {
-                    "description" : "An opaque reference to the accessKey",
+                    "description" : "An opaque reference to the password",
                     "type" : "object",
                     "properties" : { }
                   } ]
                 },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to",
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the PostgreSQL Database",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
                 },
-                "autoCreateTopic" : {
-                  "title" : "Autocreate Topic",
-                  "description" : "Setting the autocreation of the SNS topic.",
-                  "type" : "boolean",
-                  "default" : false
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
                 }
               }
             },
@@ -707,11 +703,11 @@ data:
             }
           }
         },
-        "id" : "aws_sns_sink_0.1",
+        "id" : "postgresql_sink_0.1",
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
-        "name" : "AWS SNS Sink",
-        "description" : "AWS SNS Sink",
+        "name" : "PostgreSQL Sink",
+        "description" : "PostgreSQL Sink",
         "version" : "0.1",
         "labels" : [ "sink" ],
         "channels" : [ "stable" ]
@@ -721,13 +717,13 @@ data:
           "shard_metadata" : {
             "connector_revision" : "1",
             "connector_type" : "sink",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-sns-sink-0.1",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-postgresql-sink-0.1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
-              "connector" : "aws-sns-sink",
+              "connector" : "postgresql-sink",
               "kafka" : "managed-kafka-source",
               "insert-field" : "insert-field-action",
               "extract-field" : "extract-field-action"
@@ -736,7 +732,7 @@ data:
         }
       }
     }
-  aws_sqs_sink_0.1.json: |-
+  postgresql_source_0.1.json: |-
     {
       "connector_type" : {
         "json_schema" : {
@@ -744,203 +740,55 @@ data:
           "properties" : {
             "connector" : {
               "type" : "object",
-              "title" : "AWS SQS Sink",
-              "required" : [ "queueNameOrArn", "accessKey", "secretKey", "region" ],
+              "title" : "PostgreSQL Source",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
               "properties" : {
-                "queueNameOrArn" : {
-                  "title" : "Queue Name",
-                  "description" : "The SQS Queue name or ARN",
-                  "type" : "string"
-                },
-                "accessKey" : {
-                  "title" : "Access Key",
-                  "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the accessKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to",
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "example" : "localhost"
                 },
-                "autoCreateQueue" : {
-                  "title" : "Autocreate Queue",
-                  "description" : "Setting the autocreation of the SQS queue.",
-                  "type" : "boolean",
-                  "default" : false
-                }
-              }
-            },
-            "kafka" : {
-              "type" : "object",
-              "title" : "Managed Kafka Source",
-              "required" : [ "topic" ],
-              "properties" : {
-                "topic" : {
-                  "title" : "Topic names",
-                  "description" : "Comma separated list of Kafka topic names",
-                  "type" : "string"
-                }
-              }
-            },
-            "steps" : {
-              "type" : "array",
-              "items" : {
-                "oneOf" : [ {
-                  "type" : "object",
-                  "required" : [ "insert-field" ],
-                  "properties" : {
-                    "insert-field" : {
-                      "title" : "Insert Field Action",
-                      "description" : "Adds a custom field with a constant value to the message in transit",
-                      "required" : [ "field", "value" ],
-                      "properties" : {
-                        "field" : {
-                          "title" : "Field",
-                          "description" : "The name of the field to be added",
-                          "type" : "string"
-                        },
-                        "value" : {
-                          "title" : "Value",
-                          "description" : "The value of the field",
-                          "type" : "string"
-                        }
-                      },
-                      "type" : "object"
-                    }
-                  }
-                }, {
-                  "type" : "object",
-                  "required" : [ "extract-field" ],
-                  "properties" : {
-                    "extract-field" : {
-                      "title" : "Extract Field Action",
-                      "description" : "Extract a field from the body",
-                      "required" : [ "field" ],
-                      "properties" : {
-                        "field" : {
-                          "title" : "Field",
-                          "description" : "The name of the field to be added",
-                          "type" : "string"
-                        }
-                      },
-                      "type" : "object"
-                    }
-                  }
-                } ]
-              }
-            }
-          }
-        },
-        "id" : "aws_sqs_sink_0.1",
-        "kind" : "ConnectorType",
-        "icon_href" : "TODO",
-        "name" : "AWS SQS Sink",
-        "description" : "AWS SQS Sink",
-        "version" : "0.1",
-        "labels" : [ "sink" ],
-        "channels" : [ "stable" ]
-      },
-      "channels" : {
-        "stable" : {
-          "shard_metadata" : {
-            "connector_revision" : "1",
-            "connector_type" : "sink",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-sqs-sink-0.1",
-            "operators" : [ {
-              "type" : "camel-connector-operator",
-              "version" : "[1.0.0,2.0.0)"
-            } ],
-            "kamelets" : {
-              "connector" : "aws-sqs-sink",
-              "kafka" : "managed-kafka-source",
-              "insert-field" : "insert-field-action",
-              "extract-field" : "extract-field-action"
-            }
-          }
-        }
-      }
-    }
-  aws_sqs_source_0.1.json: |-
-    {
-      "connector_type" : {
-        "json_schema" : {
-          "type" : "object",
-          "properties" : {
-            "connector" : {
-              "type" : "object",
-              "title" : "AWS SQS Source",
-              "required" : [ "queueNameOrArn", "accessKey", "secretKey", "region" ],
-              "properties" : {
-                "queueNameOrArn" : {
-                  "title" : "Queue Name",
-                  "description" : "The SQS Queue Name or ARN",
-                  "type" : "string"
-                },
-                "deleteAfterRead" : {
-                  "title" : "Auto-delete Messages",
-                  "description" : "Delete messages after consuming them",
-                  "type" : "boolean",
-                  "default" : true
-                },
-                "accessKey" : {
-                  "title" : "Access Key",
-                  "oneOf" : [ {
-                    "title" : "Access Key",
-                    "description" : "The access key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the accessKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "secretKey" : {
-                  "title" : "Secret Key",
-                  "oneOf" : [ {
-                    "title" : "Secret Key",
-                    "description" : "The secret key obtained from AWS",
-                    "type" : "string",
-                    "format" : "password"
-                  }, {
-                    "description" : "An opaque reference to the secretKey",
-                    "type" : "object",
-                    "properties" : { }
-                  } ]
-                },
-                "region" : {
-                  "title" : "AWS Region",
-                  "description" : "The AWS region to connect to",
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
                   "type" : "string",
-                  "example" : "eu-west-1"
+                  "default" : 5432
                 },
-                "autoCreateQueue" : {
-                  "title" : "Autocreate Queue",
-                  "description" : "Setting the autocreation of the SQS queue.",
-                  "type" : "boolean",
-                  "default" : false
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured PostgreSQL Database",
+                  "type" : "string"
+                },
+                "password" : {
+                  "title" : "Password",
+                  "oneOf" : [ {
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured PostgreSQL Database",
+                    "type" : "string",
+                    "format" : "password"
+                  }, {
+                    "description" : "An opaque reference to the password",
+                    "type" : "object",
+                    "properties" : { }
+                  } ]
+                },
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the PostgreSQL Database",
+                  "type" : "string",
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+                },
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
+                },
+                "consumedQuery" : {
+                  "title" : "Consumed Query",
+                  "description" : "A query to run on a tuple consumed",
+                  "type" : "string",
+                  "example" : "DELETE FROM accounts where user_id = :#user_id"
                 }
               }
             },
@@ -1005,11 +853,11 @@ data:
             }
           }
         },
-        "id" : "aws_sqs_source_0.1",
+        "id" : "postgresql_source_0.1",
         "kind" : "ConnectorType",
         "icon_href" : "TODO",
-        "name" : "AWS SQS Source",
-        "description" : "AWS SQS Source",
+        "name" : "PostgreSQL Source",
+        "description" : "PostgreSQL Source",
         "version" : "0.1",
         "labels" : [ "source" ],
         "channels" : [ "stable" ]
@@ -1019,13 +867,307 @@ data:
           "shard_metadata" : {
             "connector_revision" : "1",
             "connector_type" : "source",
-            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-aws-sqs-source-0.1",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-postgresql-source-0.1",
             "operators" : [ {
               "type" : "camel-connector-operator",
               "version" : "[1.0.0,2.0.0)"
             } ],
             "kamelets" : {
-              "connector" : "aws-sqs-source",
+              "connector" : "postgresql-source",
+              "kafka" : "managed-kafka-sink",
+              "insert-field" : "insert-field-action",
+              "extract-field" : "extract-field-action"
+            }
+          }
+        }
+      }
+    }
+  sqlserver_sink_0.1.json: |-
+    {
+      "connector_type" : {
+        "json_schema" : {
+          "type" : "object",
+          "properties" : {
+            "connector" : {
+              "type" : "object",
+              "title" : "Microsoft SQL Server Sink",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
+              "properties" : {
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 1433
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured SQL Server Database",
+                  "type" : "string"
+                },
+                "password" : {
+                  "title" : "Password",
+                  "oneOf" : [ {
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured SQL Server Database",
+                    "type" : "string",
+                    "format" : "password"
+                  }, {
+                    "description" : "An opaque reference to the password",
+                    "type" : "object",
+                    "properties" : { }
+                  } ]
+                },
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the SQL Server Database",
+                  "type" : "string",
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+                },
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
+                }
+              }
+            },
+            "kafka" : {
+              "type" : "object",
+              "title" : "Managed Kafka Source",
+              "required" : [ "topic" ],
+              "properties" : {
+                "topic" : {
+                  "title" : "Topic names",
+                  "description" : "Comma separated list of Kafka topic names",
+                  "type" : "string"
+                }
+              }
+            },
+            "steps" : {
+              "type" : "array",
+              "items" : {
+                "oneOf" : [ {
+                  "type" : "object",
+                  "required" : [ "insert-field" ],
+                  "properties" : {
+                    "insert-field" : {
+                      "title" : "Insert Field Action",
+                      "description" : "Adds a custom field with a constant value to the message in transit",
+                      "required" : [ "field", "value" ],
+                      "properties" : {
+                        "field" : {
+                          "title" : "Field",
+                          "description" : "The name of the field to be added",
+                          "type" : "string"
+                        },
+                        "value" : {
+                          "title" : "Value",
+                          "description" : "The value of the field",
+                          "type" : "string"
+                        }
+                      },
+                      "type" : "object"
+                    }
+                  }
+                }, {
+                  "type" : "object",
+                  "required" : [ "extract-field" ],
+                  "properties" : {
+                    "extract-field" : {
+                      "title" : "Extract Field Action",
+                      "description" : "Extract a field from the body",
+                      "required" : [ "field" ],
+                      "properties" : {
+                        "field" : {
+                          "title" : "Field",
+                          "description" : "The name of the field to be added",
+                          "type" : "string"
+                        }
+                      },
+                      "type" : "object"
+                    }
+                  }
+                } ]
+              }
+            }
+          }
+        },
+        "id" : "sqlserver_sink_0.1",
+        "kind" : "ConnectorType",
+        "icon_href" : "TODO",
+        "name" : "SQL Server Sink",
+        "description" : "SQL Server Sink",
+        "version" : "0.1",
+        "labels" : [ "sink" ],
+        "channels" : [ "stable" ]
+      },
+      "channels" : {
+        "stable" : {
+          "shard_metadata" : {
+            "connector_revision" : "1",
+            "connector_type" : "sink",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-sqlserver-sink-0.1",
+            "operators" : [ {
+              "type" : "camel-connector-operator",
+              "version" : "[1.0.0,2.0.0)"
+            } ],
+            "kamelets" : {
+              "connector" : "sqlserver-sink",
+              "kafka" : "managed-kafka-source",
+              "insert-field" : "insert-field-action",
+              "extract-field" : "extract-field-action"
+            }
+          }
+        }
+      }
+    }
+  sqlserver_source_0.1.json: |-
+    {
+      "connector_type" : {
+        "json_schema" : {
+          "type" : "object",
+          "properties" : {
+            "connector" : {
+              "type" : "object",
+              "title" : "Microsoft SQL Server Source",
+              "required" : [ "serverName", "username", "password", "query", "databaseName" ],
+              "properties" : {
+                "serverName" : {
+                  "title" : "Server Name",
+                  "description" : "Server Name for the data source",
+                  "type" : "string",
+                  "example" : "localhost"
+                },
+                "port" : {
+                  "title" : "Port",
+                  "description" : "Server Port for the data source",
+                  "type" : "string",
+                  "default" : 1433
+                },
+                "username" : {
+                  "title" : "Username",
+                  "description" : "The username to use for accessing a secured SQL Server Database",
+                  "type" : "string"
+                },
+                "password" : {
+                  "title" : "Password",
+                  "oneOf" : [ {
+                    "title" : "Password",
+                    "description" : "The password to use for accessing a secured SQL Server Database",
+                    "type" : "string",
+                    "format" : "password"
+                  }, {
+                    "description" : "An opaque reference to the password",
+                    "type" : "object",
+                    "properties" : { }
+                  } ]
+                },
+                "query" : {
+                  "title" : "Query",
+                  "description" : "The Query to execute against the SQL Server Database",
+                  "type" : "string",
+                  "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+                },
+                "databaseName" : {
+                  "title" : "Database Name",
+                  "description" : "The Database Name we are pointing",
+                  "type" : "string"
+                },
+                "consumedQuery" : {
+                  "title" : "Consumed Query",
+                  "description" : "A query to run on a tuple consumed",
+                  "type" : "string",
+                  "example" : "DELETE FROM accounts where user_id = :#user_id"
+                }
+              }
+            },
+            "kafka" : {
+              "type" : "object",
+              "title" : "Managed Kafka Sink",
+              "required" : [ "topic" ],
+              "properties" : {
+                "topic" : {
+                  "title" : "Topic names",
+                  "description" : "Comma separated list of Kafka topic names",
+                  "type" : "string"
+                }
+              }
+            },
+            "steps" : {
+              "type" : "array",
+              "items" : {
+                "oneOf" : [ {
+                  "type" : "object",
+                  "required" : [ "insert-field" ],
+                  "properties" : {
+                    "insert-field" : {
+                      "title" : "Insert Field Action",
+                      "description" : "Adds a custom field with a constant value to the message in transit",
+                      "required" : [ "field", "value" ],
+                      "properties" : {
+                        "field" : {
+                          "title" : "Field",
+                          "description" : "The name of the field to be added",
+                          "type" : "string"
+                        },
+                        "value" : {
+                          "title" : "Value",
+                          "description" : "The value of the field",
+                          "type" : "string"
+                        }
+                      },
+                      "type" : "object"
+                    }
+                  }
+                }, {
+                  "type" : "object",
+                  "required" : [ "extract-field" ],
+                  "properties" : {
+                    "extract-field" : {
+                      "title" : "Extract Field Action",
+                      "description" : "Extract a field from the body",
+                      "required" : [ "field" ],
+                      "properties" : {
+                        "field" : {
+                          "title" : "Field",
+                          "description" : "The name of the field to be added",
+                          "type" : "string"
+                        }
+                      },
+                      "type" : "object"
+                    }
+                  }
+                } ]
+              }
+            }
+          }
+        },
+        "id" : "sqlserver_source_0.1",
+        "kind" : "ConnectorType",
+        "icon_href" : "TODO",
+        "name" : "SQL Server Source",
+        "description" : "SQL Server Source",
+        "version" : "0.1",
+        "labels" : [ "source" ],
+        "channels" : [ "stable" ]
+      },
+      "channels" : {
+        "stable" : {
+          "shard_metadata" : {
+            "connector_revision" : "1",
+            "connector_type" : "source",
+            "connector_image" : "quay.io/lburgazzoli/mci:0.1.1-sqlserver-source-0.1",
+            "operators" : [ {
+              "type" : "camel-connector-operator",
+              "version" : "[1.0.0,2.0.0)"
+            } ],
+            "kamelets" : {
+              "connector" : "sqlserver-source",
               "kafka" : "managed-kafka-sink",
               "insert-field" : "insert-field-action",
               "extract-field" : "extract-field-action"
@@ -1037,4 +1179,4 @@ data:
 kind: ConfigMap
 metadata:
   creationTimestamp: null
-  name: connector-catalog-camel-aws
+  name: connector-catalog-camel-sql

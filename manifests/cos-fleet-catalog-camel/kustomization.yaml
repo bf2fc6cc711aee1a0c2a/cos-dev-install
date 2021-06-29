@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
 - connector-catalog-camel-misc.yaml
 - connector-catalog-camel-aws.yaml
+- connector-catalog-camel-sql.yaml
