@@ -5,16 +5,16 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
-    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+    app.quarkus.io/commit-id: 2562ba308b50fdcebf0aab0b03eac5104eab09cc
+    app.quarkus.io/vcs-url: https://github.com/valdar/cos-fleetshard-meta-camel.git
+    app.quarkus.io/build-timestamp: 2021-06-27 - 22:32:15 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
     app: cos-fleetshard-meta-camel
     component: cos-meta-camel
-    app.kubernetes.io/name: cos-fleetshard-meta-camel
     app.kubernetes.io/version: latest
+    app.kubernetes.io/name: cos-fleetshard-meta-camel
   name: cos-fleetshard-meta-camel
 imagePullSecrets:
 - name: cos-pull-secret
@@ -25,9 +25,9 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
-    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+    app.quarkus.io/commit-id: 2562ba308b50fdcebf0aab0b03eac5104eab09cc
+    app.quarkus.io/vcs-url: https://github.com/valdar/cos-fleetshard-meta-camel.git
+    app.quarkus.io/build-timestamp: 2021-06-27 - 22:32:15 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -52,22 +52,22 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
-    app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+    app.quarkus.io/commit-id: 2562ba308b50fdcebf0aab0b03eac5104eab09cc
+    app.quarkus.io/vcs-url: https://github.com/valdar/cos-fleetshard-meta-camel.git
+    app.quarkus.io/build-timestamp: 2021-06-27 - 22:32:15 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
     app: cos-fleetshard-meta-camel
     component: cos-meta-camel
-    app.kubernetes.io/name: cos-fleetshard-meta-camel
     app.kubernetes.io/version: latest
+    app.kubernetes.io/name: cos-fleetshard-meta-camel
   name: cos-fleetshard-meta-camel
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: cos-fleetshard-meta-camel
       app.kubernetes.io/version: latest
+      app.kubernetes.io/name: cos-fleetshard-meta-camel
   strategy:
     type: Recreate
   template:
@@ -75,16 +75,16 @@ spec:
       annotations:
         prometheus.io/port: "8080"
         prometheus.io/scheme: http
-        app.quarkus.io/commit-id: c5afbecf875a99aa89d3a74f14bc5cb036752c5d
-        app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-camel.git
-        app.quarkus.io/build-timestamp: 2021-06-22 - 07:46:57 +0000
+        app.quarkus.io/commit-id: 2562ba308b50fdcebf0aab0b03eac5104eab09cc
+        app.quarkus.io/vcs-url: https://github.com/valdar/cos-fleetshard-meta-camel.git
+        app.quarkus.io/build-timestamp: 2021-06-27 - 22:32:15 +0000
         prometheus.io/scrape: "true"
         prometheus.io/path: /q/metrics
       labels:
         app: cos-fleetshard-meta-camel
         component: cos-meta-camel
-        app.kubernetes.io/name: cos-fleetshard-meta-camel
         app.kubernetes.io/version: latest
+        app.kubernetes.io/name: cos-fleetshard-meta-camel
     spec:
       containers:
       - env:

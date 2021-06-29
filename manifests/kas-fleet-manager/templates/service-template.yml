@@ -318,7 +318,7 @@ parameters:
 - name: OBSERVABILITY_CONFIG_TAG
   displayName: Observability configuration tag
   description: Tag or branch to use inside the configuration repo
-  value: "v1.4.0-staging"
+  value: "v1.4.1-staging"
 
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service
@@ -406,12 +406,12 @@ parameters:
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
   description: ID of the Strimzi operator addon
-  value: "managed-kafka"
+  value: "managed-kafka-qe"
 
 - name: KAS_FLEETSHARD_ADDON_ID
   displayName: kas-fleetshard addon ID
   description: ID of the kas-fleetshard addon
-  value: "kas-fleetshard-operator"
+  value: "kas-fleetshard-operator-qe"
 
 - name: CLUSTER_LOGGING_OPERATOR_ADDON_ID
   displayName: Cluster logging operator addon ID
@@ -646,11 +646,6 @@ objects:
             emptyDir:
               medium: Memory
           initContainers:
-          - name: id
-            image: quay.io/centos/centos:8
-            command:
-            - echo
-            - ${VERSION}-${BUILD_ID}-${BUILD_TS}
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: IfNotPresent
