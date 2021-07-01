@@ -5,9 +5,9 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 53b24fabf0730914e9616275b73adc3c6ad9a278
+    app.quarkus.io/commit-id: 9c181bcb2da421a5b177f9c41d0c4d6d77aa049f
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-debezium.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 12:32:06 +0000
+    app.quarkus.io/build-timestamp: 2021-07-01 - 16:11:38 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -25,9 +25,9 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 53b24fabf0730914e9616275b73adc3c6ad9a278
+    app.quarkus.io/commit-id: 9c181bcb2da421a5b177f9c41d0c4d6d77aa049f
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-debezium.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 12:32:06 +0000
+    app.quarkus.io/build-timestamp: 2021-07-01 - 16:11:38 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -64,9 +64,9 @@ metadata:
   annotations:
     prometheus.io/port: "8080"
     prometheus.io/scheme: http
-    app.quarkus.io/commit-id: 53b24fabf0730914e9616275b73adc3c6ad9a278
+    app.quarkus.io/commit-id: 9c181bcb2da421a5b177f9c41d0c4d6d77aa049f
     app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-debezium.git
-    app.quarkus.io/build-timestamp: 2021-06-22 - 12:32:06 +0000
+    app.quarkus.io/build-timestamp: 2021-07-01 - 16:11:38 +0000
     prometheus.io/scrape: "true"
     prometheus.io/path: /q/metrics
   labels:
@@ -87,9 +87,9 @@ spec:
       annotations:
         prometheus.io/port: "8080"
         prometheus.io/scheme: http
-        app.quarkus.io/commit-id: 53b24fabf0730914e9616275b73adc3c6ad9a278
+        app.quarkus.io/commit-id: 9c181bcb2da421a5b177f9c41d0c4d6d77aa049f
         app.quarkus.io/vcs-url: https://github.com/bf2fc6cc711aee1a0c2a/cos-fleetshard-meta-debezium.git
-        app.quarkus.io/build-timestamp: 2021-06-22 - 12:32:06 +0000
+        app.quarkus.io/build-timestamp: 2021-07-01 - 16:11:38 +0000
         prometheus.io/scrape: "true"
         prometheus.io/path: /q/metrics
       labels:
