@@ -5,3 +5,9 @@ resources:
 - managedconnectorclusters.cos.bf2.org-v1.yml
 - kubernetes.yml
 - managedconnectoroperators.cos.bf2.org-v1.yml
+- cos-fleetshard-config.yaml
+secretGenerator:
+- files:
+  - application.properties=application.properties
+  name: addon-cos-fleetshard-operator-parameters
+  type: Opaque

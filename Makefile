@@ -2,16 +2,32 @@
 MKFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(realpath $(dir $(MKFILE_PATH)))
 
+## makefile settings
+.SILENT:
 .DEFAULT_GOAL := all
 SHELL = bash
 
 ## overlay directory name, empty by default to build base kustomizations
 OVERLAY ?=
 
-## save or apply kustomized resources
-OC_APPLY ?= false
+## kustomized resources output
 OUTPUT_DIR ?= $(MKFILE_DIR)/out
 OUTPUT_FILE ?= $(OVERLAY)out.yaml
+
+## cluster information
+NAMESPACE ?= managed-services-$(USER)
+CLUSTER_ID ?= $(shell oc get clusterversion -o jsonpath='{.items[].spec.clusterID}{"\n"}')
+CONSOLE_URL ?= $(shell oc get console cluster -o jsonpath='{.status.consoleURL}{"\n"}')
+CONTROL_PLANE_BASE_URL ?= $(subst console-openshift-console,kas-fleet-manager-$(NAMESPACE),$(CONSOLE_URL))
+
+## cos-fleet-manager defaults
+# TODO use latest for IMAGE_TAG
+IMAGE_REGISTRY ?= quay.io
+IMAGE_REPOSITORY ?= hchirino/testapi
+IMAGE_TAG ?= 1625088287
+REPLICAS ?= 1
+ENVIRONMENT ?= integration
+ENABLE_OCM_MOCK ?= true
 
 ## default source directory, assuming all bf2 projects are kept in the same basedir
 SOURCES_DIR ?= $(MKFILE_DIR)/work
@@ -20,54 +36,158 @@ SOURCES_DIR ?= $(MKFILE_DIR)/work
 REPO_BASE ?= git@github.com:bf2fc6cc711aee1a0c2a
 REPO_BRANCH ?= main
 GIT_PULL ?= false
-#SOURCES_DIRS := $(MANIFEST_NAMES:%=$(SOURCES_DIR)/%)
 
 ## manifests
-# TODO add non-existent cos-fleetshard-meta-debezium main branch
 MANIFESTS_PATH := $(MKFILE_DIR)/manifests
 MANIFEST_DIRS := $(wildcard $(MANIFESTS_PATH)/*)
 MANIFEST_NAMES := $(MANIFEST_DIRS:$(MANIFESTS_PATH)/%=%)
 MANIFEST_YMLS := $(MANIFEST_DIRS:%=%/*.yml)
 
 ## kustomizations
-BASE_KUSTOMIZATIONS := $(MANIFEST_DIRS:%=%/kustomization.yaml)
+KUSTOMIZATION_TARGETS := $(MANIFEST_NAMES:%=$(OUTPUT_DIR)/%-$(OUTPUT_FILE))
+# helper function to generate kustomization output file name
+output_filename = $(OUTPUT_DIR)/$(1)-$(OUTPUT_FILE)
 
-.PHONY: all clone clone_repo_* checkout_branches checkout_repo_* kustomize $(MANIFEST_NAMES) clean clean-work
+## targets
+CLONE_TARGETS := $(MANIFEST_NAMES:%=clone/%)
+CHECKOUT_TARGETS := $(MANIFEST_NAMES:%=checkout/%)
+DEPLOY_TARGETS := $(MANIFEST_NAMES:%=deploy/%)
+UNDEPLOY_TARGETS := $(MANIFEST_NAMES:%=undeploy/%)
 
-## run everything
-all: | clone checkout_branches kustomize
+## verify command dependencies exist
+REQUIRED_BINS := ocm oc kustomize docker git jq
+$(foreach bin,$(REQUIRED_BINS),\
+    $(if $(shell which $(bin) 2> /dev/null),$(info Found command `$(bin)`),$(error Please install command `$(bin)`)))
+
+## phony targets
+.PHONY: all clone checkout kustomize deploy undeploy clean
+.PHONY: $(CLONE_TARGETS) $(CHECKOUT_TARGETS) $(DEPLOY_TARGETS) $(UNDEPLOY_TARGETS) $(MANIFEST_NAMES)
+
+## forced target
+.FORCE:
+
+## run default goal to generate kustomizations
+all: | clone checkout kustomize
 
 ## clone repos
-clone: $(MANIFEST_NAMES:%=clone_repo_%)
+clone: $(SOURCES_DIR) $(CLONE_TARGETS)
+	echo Cloned repos in $(SOURCES_DIR)
 
-## clone repo if needed
-clone_repo_%:
-	if [[ ! -d $(SOURCES_DIR)/$* ]]; then git clone $(REPO_BASE)/$*.git -b $(REPO_BRANCH) $(SOURCES_DIR)/$* ; fi
+$(CLONE_TARGETS): PROJECT=$(notdir $@)
+$(CLONE_TARGETS):
+	if [[ ! -d $(SOURCES_DIR)/$(PROJECT) ]]; then git clone $(REPO_BASE)/$(PROJECT).git -b $(REPO_BRANCH) $(SOURCES_DIR)/$(PROJECT) ; fi
+
+## make sure source dir exists
+$(SOURCES_DIR):
+	mkdir -p $(SOURCES_DIR)
 
 ## switch to required branches
-checkout_branches: $(MANIFEST_NAMES:%=checkout_repo_%)
+checkout: $(CHECKOUT_TARGETS)
+	echo Using git branch $(REPO_BRANCH)
 
-checkout_repo_%:
-	git -C $(SOURCES_DIR)/$* checkout -q $(REPO_BRANCH)
+$(CHECKOUT_TARGETS): PROJECT=$(notdir $@)
+$(CHECKOUT_TARGETS):
+	git -C $(SOURCES_DIR)/$(PROJECT) checkout -q $(REPO_BRANCH)
 ifeq ($(GIT_PULL),true)
-	git -C $(SOURCES_DIR)/$* pull
+	git -C $(SOURCES_DIR)/$(PROJECT) pull
 endif
 
 ## run kustomize
-kustomize: $(MANIFEST_NAMES) $(BASE_KUSTOMIZATIONS)
+kustomize: $(MANIFEST_NAMES) $(KUSTOMIZATION_TARGETS)
+	echo Kustomized output in $(OUTPUT_DIR)
 
-.FORCE:
-
-$(BASE_KUSTOMIZATIONS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $(@D))-$(OUTPUT_FILE)
-$(BASE_KUSTOMIZATIONS): .FORCE | $(OUTPUT_DIR)
-	kustomize build $(@D)/$(OVERLAY) -o $(RESOURCES_FILE)
-ifeq ($(OC_APPLY),true)
-	oc apply -f $(RESOURCES_FILE)
-endif
+$(KUSTOMIZATION_TARGETS): KUSTOMIZATION_DIR=$(MANIFESTS_PATH)/$(patsubst $(OUTPUT_DIR)/%-$(OUTPUT_FILE),%,$@)
+$(KUSTOMIZATION_TARGETS): .FORCE | $(OUTPUT_DIR)
+	echo Kustomizing $(KUSTOMIZATION_DIR)/$(OVERLAY)
+	kustomize build $(KUSTOMIZATION_DIR)/$(OVERLAY) -o $@
 
 ## make sure output dir exists
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
+
+## deploy everything
+deploy: $(DEPLOY_TARGETS) deploy/fleet-manager
+
+## deploy kustomized manifests
+$(DEPLOY_TARGETS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $@)-$(OUTPUT_FILE)
+$(DEPLOY_TARGETS): .FORCE | $(RESOURCES_FILE)
+	echo Applying manifest $(RESOURCES_FILE)
+	oc apply -n $(NAMESPACE) -f $(RESOURCES_FILE)
+
+## undeploy everything
+undeploy: undeploy/fleet-manager $(UNDEPLOY_TARGETS)
+
+## undeploy kustomized manifests
+$(UNDEPLOY_TARGETS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $@)-$(OUTPUT_FILE)
+$(UNDEPLOY_TARGETS): .FORCE | $(RESOURCES_FILE)
+	echo Undeploying manifest $(RESOURCES_FILE)
+	oc delete -n $(NAMESPACE) -f $(RESOURCES_FILE) --ignore-not-found=true
+
+#########################
+## post kustomize targets
+#########################
+# create secret required to run cos-fleetshard after fleet-manager has been started
+FLTS_UTILS := $(SOURCES_DIR)/cos-fleetshard/etc/utils
+BASE_PATH := ${CONTROL_PLANE_BASE_URL}
+configure/cos-fleetshard:
+	CONNECTOR_CLUSTER_ID := $(shell $(FLTS_UTILS)/create-cluster.sh)
+	$(FLTS_UTILS)/create-pull-secret.sh $(CONNECTOR_CLUSTER_ID)
+
+# helper function to check parameter
+optional_param = $(if $(2), -p $(1)=$(2))
+
+# deploy fleet manager using kustomized templates
+# TODO change route template name from route in route-template.yml
+deploy/fleet-manager: RESOURCES_FILE=$(call output_filename,cos-fleet-manager)
+deploy/fleet-manager: $(RESOURCES_FILE)
+	echo Applying templates from $(RESOURCES_FILE)
+	oc process -n $(NAMESPACE) cos-fleet-manager-db | oc apply -f - -n $(NAMESPACE)
+	oc process -n $(NAMESPACE) cos-fleet-manager-secrets \
+		$(call optional_param, OCM_SERVICE_CLIENT_ID,$(OCM_SERVICE_CLIENT_ID)) \
+		$(call optional_param, OCM_SERVICE_CLIENT_SECRET,$(OCM_SERVICE_CLIENT_SECRET)) \
+		$(call optional_param, OCM_SERVICE_TOKEN,$(OCM_SERVICE_TOKEN)) \
+		$(call optional_param, OBSERVATORIUM_SERVICE_TOKEN,$(OBSERVATORIUM_SERVICE_TOKEN)) \
+		$(call optional_param, AWS_ACCESS_KEY,$(AWS_ACCESS_KEY)) \
+		$(call optional_param, AWS_ACCOUNT_ID,$(AWS_ACCOUNT_ID)) \
+		$(call optional_param, AWS_SECRET_ACCESS_KEY,$(AWS_SECRET_ACCESS_KEY)) \
+		$(call optional_param, MAS_SSO_CLIENT_ID,$(MAS_SSO_CLIENT_ID)) \
+		$(call optional_param, MAS_SSO_CLIENT_SECRET,$(MAS_SSO_CLIENT_SECRET)) \
+		$(call optional_param, MAS_SSO_CRT,$(MAS_SSO_CRT)) \
+		$(call optional_param, ROUTE53_ACCESS_KEY,$(ROUTE53_ACCESS_KEY)) \
+		$(call optional_param, ROUTE53_SECRET_ACCESS_KEY,$(ROUTE53_SECRET_ACCESS_KEY)) \
+		$(call optional_param, VAULT_ACCESS_KEY,$(VAULT_ACCESS_KEY)) \
+		$(call optional_param, VAULT_SECRET_ACCESS_KEY,$(VAULT_SECRET_ACCESS_KEY)) \
+		| oc apply -f - -n $(NAMESPACE)
+	oc process -n $(NAMESPACE) cos-fleet-manager-service \
+		$(call optional_param, ENVIRONMENT,$(ENVIRONMENT)) \
+		$(call optional_param, IMAGE_REGISTRY,$(IMAGE_REGISTRY)) \
+		$(call optional_param, IMAGE_REPOSITORY,$(IMAGE_REPOSITORY)) \
+		$(call optional_param, IMAGE_TAG,$(IMAGE_TAG)) \
+		$(call optional_param, ENABLE_OCM_MOCK,$(ENABLE_OCM_MOCK)) \
+		$(call optional_param, OCM_MOCK_MODE,$(OCM_MOCK_MODE)) \
+		$(call optional_param, OCM_URL,$(OCM_URL)) \
+		$(call optional_param, JWKS_URL,$(JWKS_URL)) \
+		$(call optional_param, MAS_SSO_BASE_URL,$(MAS_SSO_BASE_URL)) \
+		$(call optional_param, MAS_SSO_REALM,$(MAS_SSO_REALM)) \
+		$(call optional_param, OSD_IDP_MAS_SSO_REALM,$(OSD_IDP_MAS_SSO_REALM)) \
+		$(call optional_param, ALLOW_ANY_REGISTERED_USERS,$(ALLOW_ANY_REGISTERED_USERS)) \
+		$(call optional_param, VAULT_KIND,$(VAULT_KIND)) \
+		$(call optional_param, SERVICE_PUBLIC_HOST_URL,$(SERVICE_PUBLIC_HOST_URL)) \
+		$(call optional_param, REPLICAS,$(REPLICAS)) \
+		| oc apply -f - -n $(NAMESPACE)
+	oc process -n $(NAMESPACE) route | oc apply -f - -n $(NAMESPACE)
+	echo IMAGE_REGISTRY=$(IMAGE_REGISTRY) IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) IMAGE_TAG=$(IMAGE_TAG)
+
+undeploy/fleet-manager: RESOURCES_FILE=$(call output_filename,cos-fleet-manager)
+undeploy/fleet-manager: $(RESOURCES_FILE)
+	echo Undeploying template generated resources from $(RESOURCES_FILE)
+	oc process -n $(NAMESPACE) cos-fleet-manager-db | oc delete -f - -n $(NAMESPACE) --ignore-not-found=true
+	oc process -n $(NAMESPACE) cos-fleet-manager-secrets | oc delete -f - -n $(NAMESPACE) --ignore-not-found=true
+	oc process -n $(NAMESPACE) cos-fleet-manager-service \
+		$(call optional_param, IMAGE_REGISTRY,$(IMAGE_REGISTRY)) \
+		$(call optional_param, IMAGE_REPOSITORY,$(IMAGE_REPOSITORY)) \
+		| oc delete -f - -n $(NAMESPACE) --ignore-not-found=true
+	oc process -n $(NAMESPACE) route | oc delete -f - -n $(NAMESPACE) --ignore-not-found=true
 
 ##########################################
 ## manifest targets to copy manifest files
@@ -102,7 +222,10 @@ $(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/r
 # Fleetshard operator
 FLTS_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard
 
+# TODO add missing client-id and client-secret
 cos-fleetshard: $(FLTS_MANIFEST)
+	sed -i 's/cluster-id=.*/cluster-id=$(CLUSTER_ID)/' $(FLTS_MANIFEST)/application.properties
+	sed -i 's#control-plane-base-url=.*#control-plane-base-url=$(CONTROL_PLANE_BASE_URL)#' $(FLTS_MANIFEST)/application.properties
 
 $(FLTS_MANIFEST): $(SOURCES_DIR)/cos-fleetshard/etc/kubernetes/
 	cp -R $(wildcard $?/*.yml) $(FLTS_MANIFEST)
@@ -135,17 +258,17 @@ $(META_DBZ_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-debezium/etc/kubernetes
 # TODO
 cos-ui:
 
-KAS_DIR := $(MANIFESTS_PATH)/kas-fleet-manager
+COS_MGR_DIR := $(MANIFESTS_PATH)/cos-fleet-manager
 
-kas-fleet-manager: $(KAS_DIR)/templates
+cos-fleet-manager: $(COS_MGR_DIR)/templates
 	# ignore connector-catalog-configmap.yml
-	cd $(MANIFESTS_PATH)/kas-fleet-manager/ && \
+	cd $(MANIFESTS_PATH)/cos-fleet-manager/ && \
 	rm -f templates/connector-catalog-configmap.yml && \
 	kustomize edit remove resource templates/connector-catalog-configmap.yml
 
-$(KAS_DIR)/templates: $(SOURCES_DIR)/kas-fleet-manager/templates/
+$(COS_MGR_DIR)/templates: $(SOURCES_DIR)/cos-fleet-manager/templates/
 	cp $(wildcard $?/*.yml) $@
-	cd $(MANIFESTS_PATH)/kas-fleet-manager/ ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
+	cd $(MANIFESTS_PATH)/cos-fleet-manager/ ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
  		kustomize edit add resource templates/$(YML); )
 
 ## clean manifest files copied from sources
@@ -159,7 +282,7 @@ clean:
 	cd $(MANIFESTS_PATH)/cos-fleetshard-meta-camel/ && rm -f *.yml
 	cd $(MANIFESTS_PATH)/cos-fleetshard-meta-debezium/ && rm -f *.yml
 #	cd $(MANIFESTS_PATH)/cos-ui/ && rm *.yml
-	cd $(MANIFESTS_PATH)/kas-fleet-manager/ && rm -f templates/*.yml
+	cd $(MANIFESTS_PATH)/cos-fleet-manager/ && rm -f templates/*.yml
 
 debug:
 	$(foreach var,$(.VARIABLES),$(info $(var) = $($(var))))
