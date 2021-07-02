@@ -68,7 +68,7 @@ $(foreach bin,$(REQUIRED_BINS),\
 .FORCE:
 
 ## run default goal to generate kustomizations
-all: | kustomize
+all: | clean kustomize
 
 ## clone repos
 clone: $(SOURCES_DIR) $(CLONE_TARGETS)
