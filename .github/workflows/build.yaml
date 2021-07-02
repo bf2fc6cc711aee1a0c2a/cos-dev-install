@@ -37,10 +37,17 @@ jobs:
           source: "mirror"
           skip_cache: "true"
           oc: "latest"
+      
+      - name: Install OpenShift ocm tool
+        run: |
+          curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.42/ocm-linux-amd64
+          chmod +x ocm
+          sudo mv ocm /usr/local/bin/
 
       - name: Verify OpenShift CLI tools
         run: |
           oc version
+          ocm version
 
       - name: Run make
         run: make
