@@ -1,0 +1,61 @@
+name: Build All
+
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  LANG: en_US.UTF-8
+  REPO_BASE: https://github.com/bf2fc6cc711aee1a0c2a
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    #container: openshift/origin-cli:latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout project
+        uses: actions/checkout@v2
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v1
+
+      - name: Install OpenShift CLI tools
+        uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          source: "mirror"
+          skip_cache: "true"
+          oc: "latest"
+      
+      - name: Install OpenShift ocm tool
+        run: |
+          curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.42/ocm-linux-amd64
+          chmod +x ocm
+          sudo mv ocm /usr/local/bin/
+
+      - name: Verify OpenShift CLI tools
+        run: |
+          oc version
+          ocm version
+
+      - name: Run make
+        run: make
+
+      - name: Check for uncommitted changes
+        id: check-changes
+        uses: mskri/check-uncommitted-changes-action@v1.0.1
+
+      - name: Evaluate if there are changes
+        if: steps.check-changes.outputs.outcome == failure()
+        run: echo "There are uncommitted changes"
