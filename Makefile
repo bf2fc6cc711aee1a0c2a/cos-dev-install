@@ -110,7 +110,7 @@ $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 
 ## deploy everything
-deploy: $(DEPLOY_TARGETS) deploy/fleet-manager
+deploy: $(DEPLOY_TARGETS) deploy/fleet-manager-template
 
 ## deploy kustomized manifests
 $(DEPLOY_TARGETS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $@)-$(OUTPUT_FILE)
@@ -119,13 +119,16 @@ $(DEPLOY_TARGETS): deploy/%: $(OUTPUT_DIR)/%-$(OUTPUT_FILE)
 	oc apply -n $(NAMESPACE) -f $(RESOURCES_FILE)
 
 ## undeploy everything
-undeploy: undeploy/fleet-manager $(UNDEPLOY_TARGETS)
+undeploy: undeploy/fleet-manager-template $(UNDEPLOY_TARGETS)
 
 ## undeploy kustomized manifests
 $(UNDEPLOY_TARGETS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $@)-$(OUTPUT_FILE)
 $(UNDEPLOY_TARGETS): undeploy/%: $(OUTPUT_DIR)/%-$(OUTPUT_FILE)
 	echo Undeploying manifest $(RESOURCES_FILE)
 	oc delete -n $(NAMESPACE) -f $(RESOURCES_FILE) --ignore-not-found=true
+
+## setup additional undeploy prerequisite for cos-fleet-manager templates
+undeploy/cos-fleet-manager: undeploy/fleet-manager-template
 
 #########################
 ## post kustomize targets
@@ -142,8 +145,8 @@ optional_param = $(if $(2), -p $(1)=$(2))
 
 # deploy fleet manager using kustomized templates
 # TODO change route template name from route in route-template.yml
-deploy/fleet-manager: RESOURCES_FILE=$(call output_filename,cos-fleet-manager)
-deploy/fleet-manager: $(RESOURCES_FILE)
+deploy/fleet-manager-template: RESOURCES_FILE=$(call output_filename,cos-fleet-manager)
+deploy/fleet-manager-template: deploy/cos-fleet-manager $(OUTPUT_DIR)/cos-fleet-manager-$(OUTPUT_FILE)
 	echo Applying templates from $(RESOURCES_FILE)
 	oc process -n $(NAMESPACE) cos-fleet-manager-db | oc apply -f - -n $(NAMESPACE)
 	oc process -n $(NAMESPACE) cos-fleet-manager-secrets \
@@ -182,8 +185,8 @@ deploy/fleet-manager: $(RESOURCES_FILE)
 	oc process -n $(NAMESPACE) route | oc apply -f - -n $(NAMESPACE)
 	echo IMAGE_REGISTRY=$(IMAGE_REGISTRY) IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) IMAGE_TAG=$(IMAGE_TAG)
 
-undeploy/fleet-manager: RESOURCES_FILE=$(call output_filename,cos-fleet-manager)
-undeploy/fleet-manager: $(RESOURCES_FILE)
+undeploy/fleet-manager-template: RESOURCES_FILE=$(call output_filename,cos-fleet-manager)
+undeploy/fleet-manager-template: $(OUTPUT_DIR)/cos-fleet-manager-$(OUTPUT_FILE)
 	echo Undeploying template generated resources from $(RESOURCES_FILE)
 	oc process -n $(NAMESPACE) cos-fleet-manager-db | oc delete -f - -n $(NAMESPACE) --ignore-not-found=true
 	oc process -n $(NAMESPACE) cos-fleet-manager-secrets | oc delete -f - -n $(NAMESPACE) --ignore-not-found=true
