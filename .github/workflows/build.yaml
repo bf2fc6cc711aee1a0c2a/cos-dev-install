@@ -43,7 +43,7 @@ jobs:
           oc version
 
       - name: Run make
-        run: make clean all
+        run: make
 
       - name: Check for uncommitted changes
         id: check-changes
