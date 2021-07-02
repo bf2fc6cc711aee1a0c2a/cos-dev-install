@@ -60,16 +60,16 @@ Deploys all or a specific cos-* project in target OpenShift cluster.
 The target `deploy/cos-fleet-manager` deploys cos-fleet-manager templates. 
 Use the target `deploy/fleet-manager-template` to create and install resources using those templates.
 
-## Undeploy - `undeploy` `undeploy/cos-*`
+### Undeploy - `undeploy` `undeploy/cos-*`
 Undeploys all or a specific cos-* project from target OpenShift cluster.
 Use the target `undeploy/fleet-manager-template` to uninstall resources using cos-fleet-manager templates.
 The target `undeploy/cos-fleet-manager` undeploys the resources created using templates as well as the templates.
 
-## Configure - `configure/cos-*`
+### Configure - `configure/cos-*`
 Configure secrets/configmaps, etc. for individual cos-* projects.
 NOTE: WIP
 
-## Clean - `clean`, `clean/resources`, `clean/work`, `clean/all`
+### Clean - `clean`, `clean/resources`, `clean/work`, `clean/all`
 Cleans $(OUTPUT_DIR), manifest resources, default sources directory `work`, and everything, respectively.
 
 ### Default target - `all`
