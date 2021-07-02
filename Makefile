@@ -53,6 +53,7 @@ CLONE_TARGETS := $(MANIFEST_NAMES:%=clone/%)
 CHECKOUT_TARGETS := $(MANIFEST_NAMES:%=checkout/%)
 DEPLOY_TARGETS := $(MANIFEST_NAMES:%=deploy/%)
 UNDEPLOY_TARGETS := $(MANIFEST_NAMES:%=undeploy/%)
+UPDATE_TARGETS := $(MANIFEST_NAMES:%=update/%)
 
 ## verify command dependencies exist
 REQUIRED_BINS := ocm oc kustomize docker git jq
@@ -60,14 +61,14 @@ $(foreach bin,$(REQUIRED_BINS),\
     $(if $(shell which $(bin) 2> /dev/null),$(info Found command `$(bin)`),$(error Please install command `$(bin)`)))
 
 ## phony targets
-.PHONY: all clone checkout kustomize deploy undeploy clean
-.PHONY: $(CLONE_TARGETS) $(CHECKOUT_TARGETS) $(DEPLOY_TARGETS) $(UNDEPLOY_TARGETS) $(MANIFEST_NAMES)
+.PHONY: all clone checkout kustomize deploy undeploy clean clean/all clean/resources clean/work
+.PHONY: $(CLONE_TARGETS) $(CHECKOUT_TARGETS) $(DEPLOY_TARGETS) $(UNDEPLOY_TARGETS) $(UPDATE_TARGETS)
 
 ## forced target
 .FORCE:
 
 ## run default goal to generate kustomizations
-all: | clone checkout kustomize
+all: | kustomize
 
 ## clone repos
 clone: $(SOURCES_DIR) $(CLONE_TARGETS)
@@ -92,12 +93,15 @@ ifeq ($(GIT_PULL),true)
 	git -C $(SOURCES_DIR)/$(PROJECT) pull
 endif
 
+## update all manifests
+update: | clean/all clone checkout $(UPDATE_TARGETS)
+
 ## run kustomize
-kustomize: $(MANIFEST_NAMES) $(KUSTOMIZATION_TARGETS)
+kustomize: $(KUSTOMIZATION_TARGETS)
 	echo Kustomized output in $(OUTPUT_DIR)
 
 $(KUSTOMIZATION_TARGETS): KUSTOMIZATION_DIR=$(MANIFESTS_PATH)/$(patsubst $(OUTPUT_DIR)/%-$(OUTPUT_FILE),%,$@)
-$(KUSTOMIZATION_TARGETS): .FORCE | $(OUTPUT_DIR)
+$(KUSTOMIZATION_TARGETS): $(OUTPUT_DIR)
 	echo Kustomizing $(KUSTOMIZATION_DIR)/$(OVERLAY)
 	kustomize build $(KUSTOMIZATION_DIR)/$(OVERLAY) -o $@
 
@@ -110,7 +114,7 @@ deploy: $(DEPLOY_TARGETS) deploy/fleet-manager
 
 ## deploy kustomized manifests
 $(DEPLOY_TARGETS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $@)-$(OUTPUT_FILE)
-$(DEPLOY_TARGETS): .FORCE | $(RESOURCES_FILE)
+$(DEPLOY_TARGETS): deploy/%: $(OUTPUT_DIR)/%-$(OUTPUT_FILE)
 	echo Applying manifest $(RESOURCES_FILE)
 	oc apply -n $(NAMESPACE) -f $(RESOURCES_FILE)
 
@@ -119,7 +123,7 @@ undeploy: undeploy/fleet-manager $(UNDEPLOY_TARGETS)
 
 ## undeploy kustomized manifests
 $(UNDEPLOY_TARGETS): RESOURCES_FILE=$(OUTPUT_DIR)/$(notdir $@)-$(OUTPUT_FILE)
-$(UNDEPLOY_TARGETS): .FORCE | $(RESOURCES_FILE)
+$(UNDEPLOY_TARGETS): undeploy/%: $(OUTPUT_DIR)/%-$(OUTPUT_FILE)
 	echo Undeploying manifest $(RESOURCES_FILE)
 	oc delete -n $(NAMESPACE) -f $(RESOURCES_FILE) --ignore-not-found=true
 
@@ -197,7 +201,7 @@ undeploy/fleet-manager: $(RESOURCES_FILE)
 CML_CATALOG_DIR := $(MANIFESTS_PATH)/cos-fleet-catalog-camel
 CML_CATALOG_PREFIX := connector-catalog-camel-
 
-cos-fleet-catalog-camel: $(MANIFESTS_PATH)/cos-fleet-catalog-camel/configs
+update/cos-fleet-catalog-camel: $(MANIFESTS_PATH)/cos-fleet-catalog-camel/configs
 
 $(CML_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-camel/etc/connectors/
 	cp -R $(wildcard $?/*) $(CML_CATALOG_DIR)/configs/
@@ -210,7 +214,7 @@ $(CML_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-camel/etc/connector
 DBZ_CATALOG_DIR := $(MANIFESTS_PATH)/cos-fleet-catalog-debezium
 DBZ_CATALOG_PREFIX := connector-catalog-debezium-
 
-cos-fleet-catalog-debezium: $(MANIFESTS_PATH)/cos-fleet-catalog-debezium/configs
+update/cos-fleet-catalog-debezium: $(MANIFESTS_PATH)/cos-fleet-catalog-debezium/configs
 
 $(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/resources/META-INF/resources/
 	cp -R $(wildcard $?/*) $(DBZ_CATALOG_DIR)/configs/
@@ -223,7 +227,7 @@ $(DBZ_CATALOG_DIR)/configs: $(SOURCES_DIR)/cos-fleet-catalog-debezium/src/main/r
 FLTS_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard
 
 # TODO add missing client-id and client-secret
-cos-fleetshard: $(FLTS_MANIFEST)
+update/cos-fleetshard: $(FLTS_MANIFEST)
 	sed -i 's/cluster-id=.*/cluster-id=$(CLUSTER_ID)/' $(FLTS_MANIFEST)/application.properties
 	sed -i 's#control-plane-base-url=.*#control-plane-base-url=$(CONTROL_PLANE_BASE_URL)#' $(FLTS_MANIFEST)/application.properties
 
@@ -236,7 +240,7 @@ $(FLTS_MANIFEST): $(SOURCES_DIR)/cos-fleetshard/etc/kubernetes/
 # Camel meta service
 META_CML_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard-meta-camel
 
-cos-fleetshard-meta-camel: $(META_CML_MANIFEST)
+update/cos-fleetshard-meta-camel: $(META_CML_MANIFEST)
 
 $(META_CML_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-camel/etc/kubernetes/
 	cp -R $(wildcard $?/*.yml) $(META_CML_MANIFEST)
@@ -247,7 +251,7 @@ $(META_CML_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-camel/etc/kubernetes/
 # Debezium meta service
 META_DBZ_MANIFEST=$(MANIFESTS_PATH)/cos-fleetshard-meta-debezium
 
-cos-fleetshard-meta-debezium: $(META_DBZ_MANIFEST)
+update/cos-fleetshard-meta-debezium: $(META_DBZ_MANIFEST)
 
 $(META_DBZ_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-debezium/etc/kubernetes/
 	cp -R $(wildcard $?/*.yml) $(META_DBZ_MANIFEST)
@@ -256,11 +260,11 @@ $(META_DBZ_MANIFEST): $(SOURCES_DIR)/cos-fleetshard-meta-debezium/etc/kubernetes
 		kustomize edit add resource $(notdir $(YML)); )
 
 # TODO
-cos-ui:
+update/cos-ui:
 
 COS_MGR_DIR := $(MANIFESTS_PATH)/cos-fleet-manager
 
-cos-fleet-manager: $(COS_MGR_DIR)/templates
+update/cos-fleet-manager: $(COS_MGR_DIR)/templates
 	# ignore connector-catalog-configmap.yml
 	cd $(MANIFESTS_PATH)/cos-fleet-manager/ && \
 	rm -f templates/connector-catalog-configmap.yml && \
@@ -271,11 +275,20 @@ $(COS_MGR_DIR)/templates: $(SOURCES_DIR)/cos-fleet-manager/templates/
 	cd $(MANIFESTS_PATH)/cos-fleet-manager/ ; $(foreach YML, $(notdir $(wildcard $?/*.yml)), \
  		kustomize edit add resource templates/$(YML); )
 
+## clean output directory
+clean:
+	echo Cleaning $(OUTPUT_DIR)
+	rm -f $(OUTPUT_DIR)/*$(OUTPUT_FILE)
+
+## clean work directory
+clean/work:
+	echo Cleaning $(MKFILE_DIR)/work
+	rm -Rf $(MKFILE_DIR)/work
+
 ## clean manifest files copied from sources
 # TODO complete cleanup for all manifests
-clean:
-	rm -f $(OUTPUT_DIR)/*$(OUTPUT_FILE)
-	rm -Rf $(MKFILE_DIR)/work
+clean/resources:
+	echo Cleaning resource files
 	cd $(MANIFESTS_PATH)/cos-fleet-catalog-camel/ && rm -Rf configs/* && rm -f $(CML_CATALOG_PREFIX)*.yaml
 	cd $(MANIFESTS_PATH)/cos-fleet-catalog-debezium/ && rm -Rf configs/* && rm -f $(DBZ_CATALOG_PREFIX)*.yaml
 	cd $(MANIFESTS_PATH)/cos-fleetshard/ && rm -f *.yml
@@ -283,6 +296,11 @@ clean:
 	cd $(MANIFESTS_PATH)/cos-fleetshard-meta-debezium/ && rm -f *.yml
 #	cd $(MANIFESTS_PATH)/cos-ui/ && rm *.yml
 	cd $(MANIFESTS_PATH)/cos-fleet-manager/ && rm -f templates/*.yml
+	echo **NOTE** Use target \'update\' to update resources
+
+## clean everything!!!
+clean/all: clean clean/resources clean/work
+	echo All clean!!!
 
 debug:
 	$(foreach var,$(.VARIABLES),$(info $(var) = $($(var))))
