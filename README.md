@@ -6,12 +6,28 @@ Makefile and kustomizations for installing `cos-*` projects in a development env
 
 ## Prerequisites
 
+### Tools
+
 - [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool. 
 - [oc cli](https://docs.openshift.com/container-platform/4.7/cli_reference/openshift_cli/getting-started-cli.html#installing-openshift-cli) - oc command line tool. 
 - [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) - kustomize command line tool. 
 - [docker cli](https://docs.docker.com/get-docker/) - docker to create images, etc.
 - [git cli](https://git-scm.com/downloads) git command line tool to clone `cos-*` project repositories. 
-- [jq cli](https://stedolan.github.io/jq/download/) jq command line tool to process json. 
+- [jq cli](https://stedolan.github.io/jq/download/) jq command line tool to process json.
+
+### Docker Pull Secret `cos-pull-secret`
+
+In addition to the cli tools, you must also create a [docker pull secret](https://docs.openshift.com/container-platform/4.7/openshift_images/managing_images/using-image-pull-secrets.html#images-allow-pods-to-reference-images-from-secure-registries_using-image-pull-secrets) 
+named `cos-pull-secret`. When using images hosted on [Quay.io](https://quay.io/), user can click on their username 
+on the top right, then `Account Settings` and click on `Generate Encrypted Password` in `Docker CLI Password` section. 
+This brings up a dialog with an option on the left to download a `Kubernetes Secret` 
+as a file named `username-secret.yml`. This file can be downloaded and MUST be edited to change the secret name 
+to `cos-pull-secret`. This secret file can then be re-used to configure any OpenShift cluster project.
+
+### OpenShift project
+
+A project MUST be created for deploying generated resources. The project name defaults to `managed-services-$(USER)` 
+and can be overridden using the command line option `NAMESPACE=<namespace>`.  
 
 ## Introduction
 
